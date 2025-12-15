@@ -26,7 +26,8 @@
       </h1>
       <p class="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl">
         Platform terpadu untuk layanan bimbingan akademik, konseling psikologi,
-        dan pengembangan karier mahasiswa di lingkungan Fakultas.
+        dan pengembangan karier mahasiswa di lingkungan Fakultas Matematika dan Ilmu Pengetahuan Alam
+        Universitas Udayana.
       </p>
 
       <div class="flex gap-4">
@@ -43,7 +44,7 @@
     </main>
 
     <footer class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-      &copy; 2025 SI-BIKO Fakultas. All rights reserved.
+      &copy; 2025 SI-BIKO Fakultas MIPA Universitas Udayana. All rights reserved.
     </footer>
 
   </div>
