@@ -6,6 +6,7 @@ import AdminLayout from '@/components/layout/AdminLayout.vue'
 // Views (load secara Lazy Load agar ringan)
 const LandingPage = () => import('@/views/Landing/LandingPage.vue')
 const Signin = () => import('@/views/Auth/Signin.vue')
+const Signup = () => import('@/views/Auth/Signup.vue')
 const Dashboard = () => import('@/views/Dashboard/MainDashboard.vue')
 const UserProfile = () => import('@/views/Profile/UserProfile.vue')
 
@@ -33,6 +34,12 @@ const router = createRouter({
       name: 'signin',
       component: Signin,
       meta: { title: 'Login - SI-BIKO' }
+    },
+    {
+      path: '/auth/signup',
+      name: 'signup',
+      component: Signup,
+      meta: { title: 'Daftar - SI-BIKO' }
     },
     // 3. Area Dashboard (Perlu Login)
     {
