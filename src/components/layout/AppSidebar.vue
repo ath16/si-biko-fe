@@ -19,7 +19,7 @@
         !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
       ]"
     >
-      <router-link to="/app/dashboard">
+      <router-link to="/">
         <img
           v-if="isExpanded || isHovered || isMobileOpen"
           class="dark:hidden"
@@ -162,6 +162,40 @@
                           ]"
                         >
                           {{ subItem.name }}
+                          <span class="flex items-center gap-1 ml-auto">
+                            <span
+                              v-if="subItem.new"
+                              :class="[
+                                'menu-dropdown-badge',
+                                {
+                                  'menu-dropdown-badge-active': isActive(
+                                    subItem.path
+                                  ),
+                                  'menu-dropdown-badge-inactive': !isActive(
+                                    subItem.path
+                                  ),
+                                },
+                              ]"
+                            >
+                              new
+                            </span>
+                            <span
+                              v-if="subItem.pro"
+                              :class="[
+                                'menu-dropdown-badge',
+                                {
+                                  'menu-dropdown-badge-active': isActive(
+                                    subItem.path
+                                  ),
+                                  'menu-dropdown-badge-inactive': !isActive(
+                                    subItem.path
+                                  ),
+                                },
+                              ]"
+                            >
+                              pro
+                            </span>
+                          </span>
                         </router-link>
                       </li>
                     </ul>
@@ -172,90 +206,125 @@
           </div>
         </div>
       </nav>
+      <SidebarWidget v-if="isExpanded || isHovered || isMobileOpen" />
     </div>
   </aside>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
-import type { Component } from "vue";
 
 import {
+  GridIcon,
+  CalenderIcon,
+  UserCircleIcon,
+  ChatIcon,
+  MailIcon,
+  DocsIcon,
+  PieChartIcon,
   ChevronDownIcon,
   HorizontalDots,
-  LayoutDashboardIcon,
-  DocsIcon,
-  UserCircleIcon,
-  UserGroupIcon,
-} from "@/icons";
-
+  PageIcon,
+  TableIcon,
+  ListIcon,
+  PlugInIcon,
+} from "../../icons";
+import SidebarWidget from "./SidebarWidget.vue";
+import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
 import { useSidebar } from "@/composables/useSidebar";
 
-interface SubItem {
-  name: string;
-  path: string;
-  pro?: boolean;
-  new?: boolean;
-}
-
-interface MenuItem {
-  icon: Component;
-  name: string;
-  path?: string;
-  subItems?: SubItem[];
-}
-
-interface MenuGroup {
-  title: string;
-  items: MenuItem[];
-}
-
 const route = useRoute();
+
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
 
-const menuGroups = ref<MenuGroup[]>([
+const menuGroups = [
   {
-    title: 'MENU UTAMA',
+    title: "Menu",
     items: [
       {
-        icon: LayoutDashboardIcon,
-        name: 'Dashboard',
-        path: '/app/dashboard',
+        icon: GridIcon,
+        name: "Dashboard",
+        subItems: [{ name: "Ecommerce", path: "/", pro: false }],
       },
       {
-        icon: DocsIcon,
-        name: 'Ajuan Konseling',
-        path: '/app/ajuan',
+        icon: CalenderIcon,
+        name: "Calendar",
+        path: "/calendar",
       },
       {
         icon: UserCircleIcon,
-        name: 'Profil Saya',
-        path: '/app/profil',
+        name: "User Profile",
+        path: "/profile",
       },
-    ]
+
+      {
+        name: "Forms",
+        icon: ListIcon,
+        subItems: [
+          { name: "Form Elements", path: "/form-elements", pro: false },
+        ],
+      },
+      {
+        name: "Tables",
+        icon: TableIcon,
+        subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+      },
+      {
+        name: "Pages",
+        icon: PageIcon,
+        subItems: [
+          { name: "Black Page", path: "/blank", pro: false },
+          { name: "404 Page", path: "/error-404", pro: false },
+        ],
+      },
+    ],
   },
   {
-    title: 'ADMINISTRATOR',
+    title: "Others",
     items: [
       {
-        icon: UserGroupIcon,
-        name: 'Manajemen User',
-        path: '/app/admin/users',
+        icon: PieChartIcon,
+        name: "Charts",
+        subItems: [
+          { name: "Line Chart", path: "/line-chart", pro: false },
+          { name: "Bar Chart", path: "/bar-chart", pro: false },
+        ],
       },
-    ]
-  }
-]);
+      {
+        icon: BoxCubeIcon,
+        name: "Ui Elements",
+        subItems: [
+          { name: "Alerts", path: "/alerts", pro: false },
+          { name: "Avatars", path: "/avatars", pro: false },
+          { name: "Badge", path: "/badge", pro: false },
+          { name: "Buttons", path: "/buttons", pro: false },
+          { name: "Images", path: "/images", pro: false },
+          { name: "Videos", path: "/videos", pro: false },
+        ],
+      },
+      {
+        icon: PlugInIcon,
+        name: "Authentication",
+        subItems: [
+          { name: "Signin", path: "/signin", pro: false },
+          { name: "Signup", path: "/signup", pro: false },
+        ],
+      },
+      // ... Add other menu items here
+    ],
+  },
+];
 
-const isActive = (path: string) => route.path === path;
+const isActive = (path) => route.path === path;
 
-const toggleSubmenu = (groupIndex: number, itemIndex: number) => {
+const toggleSubmenu = (groupIndex, itemIndex) => {
   const key = `${groupIndex}-${itemIndex}`;
   openSubmenu.value = openSubmenu.value === key ? null : key;
 };
 
 const isAnySubmenuRouteActive = computed(() => {
-  return menuGroups.value.some((group) =>
+  return menuGroups.some((group) =>
     group.items.some(
       (item) =>
         item.subItems && item.subItems.some((subItem) => isActive(subItem.path))
@@ -263,28 +332,26 @@ const isAnySubmenuRouteActive = computed(() => {
   );
 });
 
-const isSubmenuOpen = (groupIndex: number, itemIndex: number) => {
+const isSubmenuOpen = (groupIndex, itemIndex) => {
   const key = `${groupIndex}-${itemIndex}`;
   return (
     openSubmenu.value === key ||
     (isAnySubmenuRouteActive.value &&
-      menuGroups.value[groupIndex].items[itemIndex].subItems?.some((subItem) =>
+      menuGroups[groupIndex].items[itemIndex].subItems?.some((subItem) =>
         isActive(subItem.path)
       ))
   );
 };
 
-const startTransition = (el: Element) => {
-  const element = el as HTMLElement;
-  element.style.height = "auto";
-  const height = element.scrollHeight;
-  element.style.height = "0px";
-  void element.offsetHeight;
-  element.style.height = height + "px";
+const startTransition = (el) => {
+  el.style.height = "auto";
+  const height = el.scrollHeight;
+  el.style.height = "0px";
+  el.offsetHeight; // force reflow
+  el.style.height = height + "px";
 };
 
-const endTransition = (el: Element) => {
-  const element = el as HTMLElement;
-  element.style.height = "";
+const endTransition = (el) => {
+  el.style.height = "";
 };
 </script>
