@@ -8,7 +8,7 @@ import { RouterLink } from 'vue-router'
     <nav class="w-full bg-white/90 backdrop-blur-sm border-b border-stroke py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50 shadow-sm">
       <div class="flex items-center gap-2">
         <img src="/images/logo/logo-icon.svg" alt="Logo" class="w-8 h-8" />
-        <span class="text-xl font-bold text-primary">SI-BIKO</span>
+        <span class="text-xl font-bold text-blue-600">SI-BIKO</span>
       </div>
       <div>
         <RouterLink
@@ -47,7 +47,7 @@ import { RouterLink } from 'vue-router'
           </RouterLink>
           <a
             href="#tentang"
-            class="bg-white/10 backdrop-blur-md text-white border border-white/50 text-lg px-8 py-4 rounded-lg font-bold hover:bg-white/50 hover:text-primary transition duration-300"
+            class="bg-white/10 backdrop-blur-md text-white border border-white/50 text-lg px-8 py-4 rounded-lg font-bold hover:bg-white/50 hover:text-blue-700 transition duration-300"
           >
             Pelajari Alurnya
           </a>
@@ -64,7 +64,7 @@ import { RouterLink } from 'vue-router'
 
         <div class="grid md:grid-cols-3 gap-10">
           <div class="p-8 rounded-2xl bg-gray-50 border border-slate-100 hover:shadow-lg transition group">
-            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-blue-600 group-hover:scale-110 transition-transform">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>

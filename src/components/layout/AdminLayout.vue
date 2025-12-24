@@ -1,23 +1,26 @@
+<script setup lang="ts">
+import { RouterView } from 'vue-router' // <--- INI KUNCINYA
+import AppSidebar from './AppSidebar.vue'
+import AppHeader from './AppHeader.vue'
+</script>
+
 <template>
-  <div class="min-h-screen xl:flex">
-    <app-sidebar />
-    <Backdrop />
-    <div
-      class="flex-1 transition-all duration-300 ease-in-out"
-      :class="[isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]']"
-    >
-      <app-header />
-      <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
-        <slot></slot>
-      </div>
+  <div class="flex h-screen overflow-hidden bg-gray-100 dark:bg-boxdark-2 text-bodydark">
+
+    <AppSidebar />
+
+    <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+
+      <AppHeader />
+
+      <main>
+        <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+
+          <RouterView />
+
+        </div>
+      </main>
+
     </div>
   </div>
 </template>
-
-<script setup>
-import AppSidebar from './AppSidebar.vue'
-import AppHeader from './AppHeader.vue'
-import { useSidebar } from '@/composables/useSidebar'
-import Backdrop from './Backdrop.vue'
-const { isExpanded, isHovered } = useSidebar()
-</script>

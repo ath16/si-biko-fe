@@ -1,7 +1,7 @@
 <template>
   <aside
     :class="[
-      'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-99999 border-r border-gray-200',
+      'fixed lg:static mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-99999 border-r border-gray-200',
       {
         'lg:w-[290px]': isExpanded || isMobileOpen || isHovered,
         'lg:w-[90px]': !isExpanded && !isHovered,
@@ -185,7 +185,7 @@ import { useRoute } from "vue-router";
 import { useAuth } from '@/composables/useAuth'
 import { useSidebar } from "@/composables/useSidebar";
 
-// Import Icons dari folder template
+// Import Icons
 import {
   LayoutDashboardIcon,
   DocsIcon,
@@ -198,33 +198,36 @@ import {
 
 const route = useRoute();
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
-const { user } = useAuth(); // Ambil role user dari Composable
+const { user } = useAuth();
 
-// --- KONFIGURASI MENU SI-BIKO ---
+// --- KONFIGURASI MENU DINAMIS ---
 const allMenuGroups = [
+  // 1. MENU UMUM (Muncul untuk SEMUA Role)
   {
     title: "Menu Utama",
-    roles: ['mahasiswa', 'dosen', 'wd3', 'admin'],
+    roles: ['mahasiswa', 'dosen', 'konselor', 'wd3', 'admin'],
     items: [
       {
         icon: LayoutDashboardIcon,
         name: "Dashboard",
         path: "/app/dashboard",
-        roles: ['mahasiswa', 'dosen', 'wd3', 'admin']
+        roles: ['mahasiswa', 'dosen', 'konselor', 'wd3', 'admin']
       },
       {
         icon: UserCircleIcon,
         name: "Profil Saya",
         path: "/app/profile",
-        roles: ['mahasiswa', 'dosen', 'wd3', 'admin']
+        roles: ['mahasiswa', 'dosen', 'konselor', 'wd3', 'admin']
       },
     ],
   },
+
+  // 2. MODUL AJUAN (Muncul BEDA TAMPILAN tergantung Role)
   {
     title: "Layanan Konseling",
-    roles: ['mahasiswa', 'dosen', 'wd3'],
+    roles: ['mahasiswa', 'dosen', 'konselor', 'wd3', 'admin'], // Admin juga bisa lihat
     items: [
-      // Menu Khusus Mahasiswa (Dropdown)
+      // A. Tampilan Khusus MAHASISWA (Dropdown)
       {
         icon: DocsIcon,
         name: "Ajuan Konseling",
@@ -234,15 +237,26 @@ const allMenuGroups = [
           { name: "Riwayat Ajuan", path: "/app/ajuan" },
         ],
       },
-      // Menu Khusus Dosen/WD3 (Single Link)
+
+      // B. Tampilan Khusus DOSEN / KONSELOR / WD3 (List Ajuan Masuk)
       {
         icon: DocsIcon,
         name: "Daftar Ajuan Masuk",
         path: "/app/ajuan",
-        roles: ['dosen', 'wd3'],
+        roles: ['dosen', 'konselor', 'wd3'],
+      },
+
+      // C. Tampilan Khusus ADMIN (Data Semua Ajuan)
+      {
+        icon: DocsIcon,
+        name: "Data Semua Ajuan",
+        path: "/app/ajuan",
+        roles: ['admin'],
       }
     ],
   },
+
+  // 3. MODUL ADMINISTRATOR (Hanya Admin)
   {
     title: "Administrator",
     roles: ['admin'],
@@ -263,17 +277,21 @@ const allMenuGroups = [
   }
 ];
 
-// --- LOGIC FILTER MENU BERDASARKAN ROLE ---
+// --- LOGIC FILTERING ---
 const filteredMenuGroups = computed(() => {
+  const currentRole = user.value.role || 'guest';
+
+  // Filter Grup Menu berdasarkan Role
   return allMenuGroups
-    .filter(group => !group.roles || group.roles.includes(user.value.role))
+    .filter(group => !group.roles || group.roles.includes(currentRole))
     .map(group => ({
       ...group,
-      items: group.items.filter(item => !item.roles || item.roles.includes(user.value.role))
+      // Filter Item Menu di dalamnya berdasarkan Role
+      items: group.items.filter(item => !item.roles || item.roles.includes(currentRole))
     }));
 });
 
-// --- HELPER FUNCTIONS (TIDAK BERUBAH) ---
+// --- HELPER FUNCTIONS BAWAAN TEMPLATE ---
 const isActive = (path) => route.path === path;
 
 const toggleSubmenu = (groupIndex, itemIndex) => {
