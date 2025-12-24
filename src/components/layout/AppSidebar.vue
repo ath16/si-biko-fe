@@ -19,7 +19,7 @@
         !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
       ]"
     >
-      <router-link to="/">
+      <router-link to="/app/dashboard">
         <img
           v-if="isExpanded || isHovered || isMobileOpen"
           class="dark:hidden"
@@ -50,7 +50,7 @@
     >
       <nav class="mb-6">
         <div class="flex flex-col gap-4">
-          <div v-for="(menuGroup, groupIndex) in menuGroups" :key="groupIndex">
+          <div v-for="(menuGroup, groupIndex) in filteredMenuGroups" :key="groupIndex">
             <h2
               :class="[
                 'mb-4 text-xs uppercase flex leading-[20px] text-gray-400',
@@ -66,6 +66,7 @@
             </h2>
             <ul class="flex flex-col gap-4">
               <li v-for="(item, index) in menuGroup.items" :key="item.name">
+
                 <button
                   v-if="item.subItems"
                   @click="toggleSubmenu(groupIndex, index)"
@@ -107,6 +108,7 @@
                     ]"
                   />
                 </button>
+
                 <router-link
                   v-else-if="item.path"
                   :to="item.path"
@@ -133,6 +135,7 @@
                     >{{ item.name }}</span
                   >
                 </router-link>
+
                 <transition
                   @enter="startTransition"
                   @after-enter="endTransition"
@@ -162,40 +165,6 @@
                           ]"
                         >
                           {{ subItem.name }}
-                          <span class="flex items-center gap-1 ml-auto">
-                            <span
-                              v-if="subItem.new"
-                              :class="[
-                                'menu-dropdown-badge',
-                                {
-                                  'menu-dropdown-badge-active': isActive(
-                                    subItem.path
-                                  ),
-                                  'menu-dropdown-badge-inactive': !isActive(
-                                    subItem.path
-                                  ),
-                                },
-                              ]"
-                            >
-                              new
-                            </span>
-                            <span
-                              v-if="subItem.pro"
-                              :class="[
-                                'menu-dropdown-badge',
-                                {
-                                  'menu-dropdown-badge-active': isActive(
-                                    subItem.path
-                                  ),
-                                  'menu-dropdown-badge-inactive': !isActive(
-                                    subItem.path
-                                  ),
-                                },
-                              ]"
-                            >
-                              pro
-                            </span>
-                          </span>
                         </router-link>
                       </li>
                     </ul>
@@ -206,116 +175,105 @@
           </div>
         </div>
       </nav>
-      <SidebarWidget v-if="isExpanded || isHovered || isMobileOpen" />
-    </div>
+      </div>
   </aside>
 </template>
 
 <script setup>
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
-
-import {
-  GridIcon,
-  CalenderIcon,
-  UserCircleIcon,
-  ChatIcon,
-  MailIcon,
-  DocsIcon,
-  PieChartIcon,
-  ChevronDownIcon,
-  HorizontalDots,
-  PageIcon,
-  TableIcon,
-  ListIcon,
-  PlugInIcon,
-} from "../../icons";
-import SidebarWidget from "./SidebarWidget.vue";
-import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
+import { useAuth } from '@/composables/useAuth'
 import { useSidebar } from "@/composables/useSidebar";
 
+// Import Icons dari folder template
+import {
+  LayoutDashboardIcon,
+  DocsIcon,
+  UserCircleIcon,
+  UserGroupIcon,
+  ListIcon,
+  HorizontalDots,
+  ChevronDownIcon
+} from "../../icons";
+
 const route = useRoute();
-
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
+const { user } = useAuth(); // Ambil role user dari Composable
 
-const menuGroups = [
+// --- KONFIGURASI MENU SI-BIKO ---
+const allMenuGroups = [
   {
-    title: "Menu",
+    title: "Menu Utama",
+    roles: ['mahasiswa', 'dosen', 'wd3', 'admin'],
     items: [
       {
-        icon: GridIcon,
+        icon: LayoutDashboardIcon,
         name: "Dashboard",
-        subItems: [{ name: "Ecommerce", path: "/", pro: false }],
-      },
-      {
-        icon: CalenderIcon,
-        name: "Calendar",
-        path: "/calendar",
+        path: "/app/dashboard",
+        roles: ['mahasiswa', 'dosen', 'wd3', 'admin']
       },
       {
         icon: UserCircleIcon,
-        name: "User Profile",
-        path: "/profile",
-      },
-
-      {
-        name: "Forms",
-        icon: ListIcon,
-        subItems: [
-          { name: "Form Elements", path: "/form-elements", pro: false },
-        ],
-      },
-      {
-        name: "Tables",
-        icon: TableIcon,
-        subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-      },
-      {
-        name: "Pages",
-        icon: PageIcon,
-        subItems: [
-          { name: "Black Page", path: "/blank", pro: false },
-          { name: "404 Page", path: "/error-404", pro: false },
-        ],
+        name: "Profil Saya",
+        path: "/app/profile",
+        roles: ['mahasiswa', 'dosen', 'wd3', 'admin']
       },
     ],
   },
   {
-    title: "Others",
+    title: "Layanan Konseling",
+    roles: ['mahasiswa', 'dosen', 'wd3'],
     items: [
+      // Menu Khusus Mahasiswa (Dropdown)
       {
-        icon: PieChartIcon,
-        name: "Charts",
+        icon: DocsIcon,
+        name: "Ajuan Konseling",
+        roles: ['mahasiswa'],
         subItems: [
-          { name: "Line Chart", path: "/line-chart", pro: false },
-          { name: "Bar Chart", path: "/bar-chart", pro: false },
+          { name: "Buat Ajuan Baru", path: "/app/ajuan/tambah" },
+          { name: "Riwayat Ajuan", path: "/app/ajuan" },
         ],
       },
+      // Menu Khusus Dosen/WD3 (Single Link)
       {
-        icon: BoxCubeIcon,
-        name: "Ui Elements",
-        subItems: [
-          { name: "Alerts", path: "/alerts", pro: false },
-          { name: "Avatars", path: "/avatars", pro: false },
-          { name: "Badge", path: "/badge", pro: false },
-          { name: "Buttons", path: "/buttons", pro: false },
-          { name: "Images", path: "/images", pro: false },
-          { name: "Videos", path: "/videos", pro: false },
-        ],
-      },
-      {
-        icon: PlugInIcon,
-        name: "Authentication",
-        subItems: [
-          { name: "Signin", path: "/signin", pro: false },
-          { name: "Signup", path: "/signup", pro: false },
-        ],
-      },
-      // ... Add other menu items here
+        icon: DocsIcon,
+        name: "Daftar Ajuan Masuk",
+        path: "/app/ajuan",
+        roles: ['dosen', 'wd3'],
+      }
     ],
   },
+  {
+    title: "Administrator",
+    roles: ['admin'],
+    items: [
+      {
+        icon: UserGroupIcon,
+        name: "Manajemen User",
+        path: "/app/admin/users",
+        roles: ['admin']
+      },
+      {
+        icon: ListIcon,
+        name: "Laporan Statistik",
+        path: "/app/admin/laporan",
+        roles: ['admin']
+      }
+    ]
+  }
 ];
 
+// --- LOGIC FILTER MENU BERDASARKAN ROLE ---
+const filteredMenuGroups = computed(() => {
+  return allMenuGroups
+    .filter(group => !group.roles || group.roles.includes(user.value.role))
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => !item.roles || item.roles.includes(user.value.role))
+    }));
+});
+
+// --- HELPER FUNCTIONS (TIDAK BERUBAH) ---
 const isActive = (path) => route.path === path;
 
 const toggleSubmenu = (groupIndex, itemIndex) => {
@@ -324,7 +282,7 @@ const toggleSubmenu = (groupIndex, itemIndex) => {
 };
 
 const isAnySubmenuRouteActive = computed(() => {
-  return menuGroups.some((group) =>
+  return filteredMenuGroups.value.some((group) =>
     group.items.some(
       (item) =>
         item.subItems && item.subItems.some((subItem) => isActive(subItem.path))
@@ -337,7 +295,7 @@ const isSubmenuOpen = (groupIndex, itemIndex) => {
   return (
     openSubmenu.value === key ||
     (isAnySubmenuRouteActive.value &&
-      menuGroups[groupIndex].items[itemIndex].subItems?.some((subItem) =>
+      filteredMenuGroups.value[groupIndex]?.items[itemIndex]?.subItems?.some((subItem) =>
         isActive(subItem.path)
       ))
   );
