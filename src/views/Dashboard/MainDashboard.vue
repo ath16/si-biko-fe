@@ -62,7 +62,7 @@ onMounted(() => {
       <div v-if="isMahasiswa">
         <router-link
           to="/app/ajuan/tambah"
-          class="inline-flex items-center justify-center gap-2.5 rounded-md bg-blue-600 py-3 px-6 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+          class="inline-flex items-center justify-center gap-2.5 rounded-md bg-blue-600 py-3 px-6 text-center font-medium text-white hover:bg-blue-600/90 lg:px-8 xl:px-10"
         >
           <span>+</span> Buat Ajuan Baru
         </router-link>
@@ -127,7 +127,7 @@ onMounted(() => {
               <p class="text-sm text-blue-600 font-bold">Batas Pengajuan Cuti</p>
               <p class="text-xs text-slate-600 mt-1">Pengajuan cuti akademik paling lambat tanggal 30 Desember.</p>
             </div>
-            <div class="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-r">
+            <div class="p-4 bg-yellow-50 border-l-4 border-yellow-300 rounded-r">
               <p class="text-sm text-warning-800 font-bold">Maintenance Sistem</p>
               <p class="text-xs text-slate-600 mt-1">Sistem akan down pada hari Sabtu jam 00:00 - 04:00 WITA.</p>
             </div>

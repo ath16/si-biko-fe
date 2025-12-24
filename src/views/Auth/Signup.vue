@@ -91,7 +91,7 @@ const handleSignup = () => {
               <input
                 type="submit"
                 value="Buat Akun"
-                class="w-full cursor-pointer rounded-lg border border-blue-light-500 bg-blue-600 p-4 font-medium text-white transition hover:bg-opacity-90"
+                class="w-full cursor-pointer rounded-lg border border-blue-light-500 bg-blue-600 p-4 font-medium text-white transition hover:bg-blue-600/90"
               />
             </div>
 

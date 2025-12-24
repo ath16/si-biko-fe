@@ -24,7 +24,7 @@ const getStatusBadge = (status: string) => {
   <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
     <div class="py-6 px-4 md:px-6 xl:px-7.5 flex justify-between items-center">
       <h4 class="text-xl font-bold text-black dark:text-white">Riwayat Ajuan Saya</h4>
-      <RouterLink to="/app/ajuan/tambah" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-opacity-90">
+      <RouterLink to="/app/ajuan/tambah" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-600/90">
         + Buat Ajuan
       </RouterLink>
     </div>

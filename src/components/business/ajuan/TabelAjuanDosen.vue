@@ -34,8 +34,8 @@ const handleTolak = (id: number) => alert(`Ajuan #${id} Ditolak. Buka Modal Alas
         <p class="text-xs text-slate-500">{{ item.tgl }}</p>
       </div>
       <div class="col-span-1 sm:col-span-2 flex flex-col sm:flex-row items-center justify-center gap-2">
-        <button @click="handleTerima(item.id)" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-opacity-90">Terima</button>
-        <button @click="handleTolak(item.id)" class="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-opacity-90">Tolak</button>
+        <button @click="handleTerima(item.id)" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-600/90">Terima</button>
+        <button @click="handleTolak(item.id)" class="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-600/90">Tolak</button>
         <RouterLink :to="`/app/ajuan/${item.id}`" class="border border-blue-light-500 text-blue-600 px-2 py-1 rounded text-xs hover:bg-blue-700 hover:text-white">Detail</RouterLink>
       </div>
     </div>
