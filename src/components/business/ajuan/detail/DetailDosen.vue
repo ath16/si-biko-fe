@@ -91,7 +91,7 @@ const handleRujuk = () => {
                 v-model="catatanDosen"
                 rows="5"
                 placeholder="Tuliskan hasil diskusi, solusi yang diberikan, atau alasan merujuk..."
-                class="w-full rounded border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                class="w-full rounded border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-blue-light-500 dark:border-strokedark dark:bg-form-input dark:text-white dark:focus:border-blue-light-500"
               ></textarea>
             </div>
 

@@ -24,7 +24,7 @@ const detail = ref({
         <div class="p-6.5 flex flex-col gap-5">
           <div>
             <label class="mb-2 block text-sm font-medium text-black dark:text-white">Judul Konseling</label>
-            <div class="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary">
+            <div class="w-full rounded border border-stroke bg-gray py-3 px-4 text-black focus:border-blue-light-500 focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-blue-light-500">
               {{ detail.judul }}
             </div>
           </div>
