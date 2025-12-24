@@ -68,12 +68,6 @@ const router = createRouter({
           component: () => import('@/views/Ajuan/DetailAjuan.vue'),
           meta: { title: 'Detail Konseling' }
         },
-        {
-          path: 'ajuan/:id/cetak',
-          name: 'ajuan-print',
-          component: () => import('@/views/Ajuan/CetakSurat.vue'),
-          meta: { title: 'Cetak Surat Rujukan' }
-        },
 
         // --- Modul: PROFIL ---
         {
@@ -105,7 +99,15 @@ const router = createRouter({
       ]
     },
 
-    // 4. ERROR PAGES (Tangkap link 404)
+    // 4. Cetak Surat Rujukan
+    {
+      path: '/print/surat-rujukan/:id',
+      name: 'print-surat',
+      component: () => import('@/views/Ajuan/CetakSurat.vue'),
+      meta: { title: 'Cetak Surat Rujukan', requiresAuth: true }
+    },
+
+    // 5. ERROR PAGES (Tangkap link 404)
     {
       path: '/:pathMatch(.*)*',
       component: () => import('@/views/Errors/FourZeroFour.vue'),

@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const statusPenanganan = ref<'pending' | 'proses' | 'selesai'>('pending')
 const catatanWD3 = ref('')
 
 const handleTerima = () => statusPenanganan.value = 'proses'
+
 const handleSelesai = () => {
   if(!catatanWD3.value) return alert("Catatan wajib diisi!")
   statusPenanganan.value = 'selesai'
@@ -14,7 +17,8 @@ const handleSelesai = () => {
 const handleRujukUniv = () => {
    if(!catatanWD3.value) return alert("Catatan wajib diisi!")
    // Arahkan ke halaman cetak
-   window.location.href = '/app/ajuan/101/cetak'
+   // window.location.href = '/app/ajuan/101/cetak'
+   router.push('/print/surat-rujukan/101')
 }
 </script>
 

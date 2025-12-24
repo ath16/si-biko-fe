@@ -47,7 +47,7 @@ import { RouterLink } from 'vue-router'
           </RouterLink>
           <a
             href="#tentang"
-            class="bg-white/10 backdrop-blur-md text-white border border-white/50 text-lg px-8 py-4 rounded-lg font-bold hover:bg-white/50 hover:text-blue-700 transition duration-300"
+            class="bg-white/10 backdrop-blur-md text-white border border-white/50 text-lg px-8 py-4 rounded-lg font-bold hover:bg-white/50 hover:text-white transition duration-300"
           >
             Pelajari Alurnya
           </a>
