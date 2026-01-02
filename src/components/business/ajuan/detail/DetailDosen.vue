@@ -67,7 +67,7 @@ const handleRujuk = () => {
         <div class="p-6.5 flex flex-col gap-4">
           <div class="flex items-center gap-4 mb-4">
             <div class="h-14 w-14 rounded-full overflow-hidden">
-              <img src="/images/user/user-01.jpg" alt="User" />
+              <img src="/images/user/user.jpg" alt="User" />
             </div>
             <div>
               <h4 class="font-bold text-black dark:text-white">Atha Fajri</h4>

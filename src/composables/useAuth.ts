@@ -42,28 +42,28 @@ export function useAuth() {
         user.value.id = '240001'
         user.value.name = 'Atha Fajri'
         user.value.email = 'atha@student.unud.ac.id'
-        user.value.photo = '/images/user/user-01.jpg'
+        user.value.photo = '/images/user/user.jpg'
         break
 
       case 'dosen':
         user.value.id = '198001'
         user.value.name = 'Dr. Budi Santoso'
         user.value.email = 'budi@dosen.unud.ac.id'
-        user.value.photo = '/images/user/user-02.jpg'
+        user.value.photo = '/images/user/user.jpg'
         break
 
       case 'wd3':
         user.value.id = '197501'
         user.value.name = 'Prof. I Made WD3'
         user.value.email = 'wd3@unud.ac.id'
-        user.value.photo = '/images/user/user-03.jpg'
+        user.value.photo = '/images/user/user.jpg'
         break
 
       case 'admin':
         user.value.id = '999'
         user.value.name = 'Admin Fakultas MIPA'
         user.value.email = 'admin@mipa.unud.ac.id'
-        user.value.photo = '/images/user/owner.jpg'
+        user.value.photo = '/images/user/user.jpg'
         break
     }
 
