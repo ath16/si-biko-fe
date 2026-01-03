@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import Breadcrumb from '@/components/common/PageBreadcrumb.vue'
 
 const router = useRouter()
+const route = useRoute()
 
-// State Data Form
+// Deteksi Mode Edit
+const isEditMode = computed(() => route.name === 'edit-ajuan' || !!route.params.id)
+
 const formData = ref({
   judul: '',
   kategori: '',
@@ -17,16 +20,34 @@ const formData = ref({
 
 const isSubmitting = ref(false)
 
-// Data Dummy Dosen (Nanti diambil dari API)
+// Data Dummy Dosen
 const listDosen = [
   { id: '198001', nama: 'Dr. Budi Santoso (PA)' },
   { id: '198002', nama: 'Prof. Made (Kaprodi)' },
   { id: 'K001', nama: 'Ibu Ratna, M.Psi (Konselor)' },
 ]
 
-// Fungsi Submit
+// Load Data jika Edit Mode
+onMounted(() => {
+  if (isEditMode.value) {
+    // Simulasi Fetch Data dari API berdasarkan ID
+    // const ajuanId = route.params.id
+    // const data = await api.getAjuan(ajuanId)
+
+    // Kita isi dummy data untuk simulasi
+    formData.value = {
+      judul: 'Konsultasi KRS Semester 5',
+      kategori: 'Akademik',
+      dosenId: '198001',
+      tanggal: '2025-12-20',
+      waktu: '09:00',
+      deskripsi: 'Saya bingung memilih mata kuliah pilihan yang sesuai dengan skripsi saya nanti.'
+    }
+  }
+})
+
+// Fungsi Submit (Create / Update)
 const handleSubmit = () => {
-  // Validasi Sederhana
   if (!formData.value.judul || !formData.value.dosenId || !formData.value.tanggal) {
     alert("Mohon lengkapi semua data wajib!")
     return
@@ -36,30 +57,29 @@ const handleSubmit = () => {
 
   // Simulasi API Call
   setTimeout(() => {
-    alert("Ajuan berhasil dikirim! Menunggu persetujuan Dosen.")
+    const pesan = isEditMode.value
+      ? "Perubahan berhasil disimpan!"
+      : "Ajuan berhasil dikirim! Menunggu persetujuan Dosen."
+
+    alert(pesan)
     isSubmitting.value = false
-    // Redirect kembali ke halaman List Ajuan
     router.push('/app/ajuan')
   }, 1000)
 }
 
-// Fungsi Batal
-const handleCancel = () => {
-  router.back()
-}
+const handleCancel = () => router.back()
 </script>
 
 <template>
   <div>
-    <Breadcrumb pageTitle="Buat Ajuan Baru" />
+    <Breadcrumb :pageTitle="isEditMode ? 'Edit Ajuan Konseling' : 'Buat Ajuan Baru'" />
 
     <div class="grid grid-cols-1 gap-9 sm:grid-cols-2">
       <div class="flex flex-col gap-9">
-
         <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
           <div class="border-b border-stroke py-4 px-6.5 dark:border-strokedark">
             <h3 class="font-medium text-black dark:text-white">
-              Formulir Konseling
+              {{ isEditMode ? 'Perbarui Data Ajuan' : 'Formulir Konseling' }}
             </h3>
           </div>
 
@@ -74,7 +94,7 @@ const handleCancel = () => {
                   v-model="formData.judul"
                   type="text"
                   placeholder="Contoh: Kesulitan Akademik Semester 5"
-                  class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-blue-light-500 active:border-blue-light-500 disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-blue-light-500"
+                  class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-blue-light-500 active:border-blue-light-500 dark:border-form-strokedark dark:bg-form-input dark:focus:border-blue-light-500"
                 />
               </div>
 
@@ -94,7 +114,7 @@ const handleCancel = () => {
                     <option value="Sosial">Sosial & Pergaulan</option>
                   </select>
                   <span class="absolute top-1/2 right-4 z-30 -translate-y-1/2">
-                    <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z" fill=""></path></svg>
+                    <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z" fill=""></path></svg>
                   </span>
                 </div>
               </div>
@@ -114,7 +134,7 @@ const handleCancel = () => {
                     </option>
                   </select>
                   <span class="absolute top-1/2 right-4 z-30 -translate-y-1/2">
-                     <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z" fill=""></path></svg>
+                     <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z" fill=""></path></svg>
                   </span>
                 </div>
               </div>
@@ -151,7 +171,7 @@ const handleCancel = () => {
                   v-model="formData.deskripsi"
                   rows="6"
                   placeholder="Ceritakan sedikit tentang masalah yang ingin Anda konsultasikan..."
-                  class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-blue-light-500 active:border-blue-light-500 disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-blue-light-500"
+                  class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-blue-light-500 active:border-blue-light-500 dark:border-form-strokedark dark:bg-form-input dark:focus:border-blue-light-500"
                 ></textarea>
               </div>
 
@@ -159,9 +179,9 @@ const handleCancel = () => {
                 <button
                   type="submit"
                   :disabled="isSubmitting"
-                  class="flex w-full justify-center rounded bg-blue-600 p-3 font-medium text-gray-100 hover:bg-blue-600/90 disabled:blue-600/70"
+                  class="flex w-full justify-center rounded bg-blue-600 p-3 font-medium text-gray-100 hover:bg-blue-600/90 disabled:opacity-70"
                 >
-                  {{ isSubmitting ? 'Mengirim...' : 'Kirim Ajuan' }}
+                  {{ isSubmitting ? 'Memproses...' : (isEditMode ? 'Simpan Perubahan' : 'Kirim Ajuan') }}
                 </button>
                 <button
                   type="button"
@@ -189,7 +209,9 @@ const handleCancel = () => {
               <li>Pilih kategori yang paling sesuai dengan masalah Anda.</li>
               <li>Dosen Pembimbing Akademik (PA) adalah prioritas utama untuk masalah akademik.</li>
               <li>Jadwal yang Anda ajukan bersifat <b>Pengajuan</b>, Dosen berhak mengajukan jadwal pengganti (Reschedule).</li>
-              <li>Semua cerita yang Anda sampaikan dijamin kerahasiaannya.</li>
+              <li v-if="isEditMode" class="text-blue-600">
+                <b>Catatan Edit:</b> Mengubah jadwal akan membuat status ajuan kembali menjadi "Pending" menunggu persetujuan ulang.
+              </li>
             </ul>
           </div>
         </div>

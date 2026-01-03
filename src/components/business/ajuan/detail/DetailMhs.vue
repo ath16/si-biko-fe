@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import ModalReschedule from '@/components/business/ajuan/ModalReschedule.vue'
 
 const router = useRouter()
@@ -24,7 +24,7 @@ const detailAjuan = ref({
 
 const showModalReschedule = ref(false)
 
-// --- HELPER CLASS (PENGGANTI @APPLY) ---
+// --- HELPER CLASS ---
 const getBadgeClass = (statusKey: string) => {
   const base = "rounded py-1 px-3 text-sm font-medium "
   switch(statusKey) {
@@ -136,9 +136,18 @@ const batalkanHapus = () => {
              </div>
              <p class="font-bold mb-6">{{ detailAjuan.tanggalAwal }}</p>
 
-             <button @click="handleHapus" class="text-white bg-red-600 border border-red-700 px-4 py-2 rounded text-sm hover:bg-red-600/90 transition">
-               Hapus Ajuan
-             </button>
+             <div class="flex justify-center gap-3">
+                <RouterLink
+                  :to="`/app/ajuan/edit/${detailAjuan.id}`"
+                  class="text-white bg-blue-600 border-blue-light-500 px-4 py-2 rounded text-sm hover:bg-blue-600/90 transition"
+                >
+                  Edit
+                </RouterLink>
+
+                <button @click="handleHapus" class="text-white bg-red-600 border border-red-300 px-4 py-2 rounded text-sm hover:bg-red-600/90 transition">
+                  Hapus
+                </button>
+             </div>
           </div>
 
           <div v-else class="text-center py-4">

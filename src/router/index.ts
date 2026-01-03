@@ -68,6 +68,12 @@ const router = createRouter({
           component: () => import('@/views/Ajuan/DetailAjuan.vue'),
           meta: { title: 'Detail Konseling' }
         },
+        {
+          path: 'ajuan/edit/:id',
+          name: 'edit-ajuan',
+          component: () => import('@/views/Ajuan/FormAjuan.vue'),
+          meta: { title: 'Edit Ajuan' }
+        },
 
         // --- Modul: PROFIL ---
         {
