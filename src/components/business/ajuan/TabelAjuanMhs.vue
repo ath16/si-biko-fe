@@ -15,6 +15,7 @@ const getStatusBadge = (status: string) => {
     case 'disetujui': return 'bg-green-600/10 text-green-600'
     case 'ditolak': return 'bg-red-600/10 text-red-600'
     case 'selesai': return 'bg-blue-600/10 text-blue-600'
+    case 'request_delete': return 'bg-gray-200 text-gray-600 border border-gray-300'
     default: return 'bg-gray-100 text-gray-600'
   }
 }
