@@ -47,15 +47,15 @@ const handleLogin = () => {
       <div class="hidden w-full xl:block xl:w-1/2">
         <div class="py-17.5 px-26 text-center">
           <RouterLink class="mb-5.5 inline-block" to="/">
-            <h1 class="text-4xl font-extrabold text-white tracking-widest">SI-BIKO</h1>
+            <h1 class="text-4xl font-extrabold text-gray-900 tracking-widest">SI-BIKO</h1>
           </RouterLink>
 
-          <p class="font-medium 2xl:px-20 text-white">
+          <p class="font-medium 2xl:px-20 text-gray-900">
             Sistem Informasi Bimbingan Konseling <br> Fakultas MIPA Universitas Udayana
           </p>
 
           <span class="mt-15 inline-block">
-            <img src="/images/logo/auth-logo.svg" alt="Auth BG" class="h-40"/>
+            <img src="/images/logo/fmipa-icon.png" alt="Auth BG" class="h-40"/>
           </span>
         </div>
       </div>

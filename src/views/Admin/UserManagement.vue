@@ -3,7 +3,6 @@ import { ref, computed } from 'vue'
 import Breadcrumb from '@/components/common/PageBreadcrumb.vue'
 import { ChevronDownIcon } from '@/icons'
 
-// --- 1. SETUP DATA ---
 interface User {
   id: number
   name: string
@@ -21,49 +20,6 @@ const users = ref<User[]>([
   { id: 5, name: 'Admin Fakultas', username: 'admin01', email: 'admin@fmipa.unud.ac.id', role: 'admin', status: 'active' },
 ])
 
-// --- 2. LOGIKA APPROVAL (BARU) ---
-const showApprovalModal = ref(false)
-const pendingRequests = ref([
-  {
-    id: 101,
-    userId: 1,
-    nama: 'Atha Fajri',
-    role: 'Mahasiswa',
-    waktu: '10 Menit yang lalu',
-    dataLama: { name: 'Atha Fajri', phone: '081234567890' },
-    dataBaru: { name: 'Atha Fajri Putra', phone: '089999888777' }
-  }
-])
-
-const openApproval = () => {
-  if (pendingRequests.value.length === 0) return alert("Tidak ada permintaan perubahan data.")
-  showApprovalModal.value = true
-}
-
-const handleApprove = (req: any) => {
-  if(confirm("Setujui perubahan ini? Data user akan diperbarui.")) {
-    // 1. Update data user asli
-    const userIndex = users.value.findIndex(u => u.id === req.userId)
-    if(userIndex !== -1) {
-      users.value[userIndex].name = req.dataBaru.name
-      // Update phone (simulasi krn di table ga ada kolom phone)
-    }
-    // 2. Hapus request
-    pendingRequests.value = pendingRequests.value.filter(r => r.id !== req.id)
-    alert("Berhasil disetujui.")
-    if(pendingRequests.value.length === 0) showApprovalModal.value = false
-  }
-}
-
-const handleReject = (id: number) => {
-  if(confirm("Tolak permintaan ini?")) {
-    pendingRequests.value = pendingRequests.value.filter(r => r.id !== id)
-    alert("Permintaan ditolak.")
-    if(pendingRequests.value.length === 0) showApprovalModal.value = false
-  }
-}
-
-// --- 3. CRUD LOGIC LAMA ---
 const searchQuery = ref('')
 const selectedRole = ref('all')
 const showModal = ref(false)
@@ -141,16 +97,6 @@ const getRoleBadgeColor = (role: string) => {
        </div>
 
        <div class="flex gap-3">
-         <button
-           @click="openApproval"
-           class="relative flex items-center justify-center gap-2 rounded border border-stroke bg-white py-2.5 px-4 font-medium text-black hover:bg-gray-50 dark:border-strokedark dark:bg-meta-4 dark:text-white"
-         >
-           Permintaan
-           <span v-if="pendingRequests.length > 0" class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-             {{ pendingRequests.length }}
-           </span>
-         </button>
-
          <button @click="openAddModal" class="flex items-center justify-center gap-2 rounded bg-blue-600 py-2.5 px-6 font-medium text-white hover:bg-blue-600/90">
            <span>+</span> Tambah User
          </button>
@@ -198,49 +144,6 @@ const getRoleBadgeColor = (role: string) => {
               <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">Simpan</button>
             </div>
           </form>
-        </div>
-      </div>
-    </Teleport>
-
-    <Teleport to="body">
-      <div v-if="showApprovalModal" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-        <div class="w-full max-w-2xl rounded-lg bg-white p-8 shadow-2xl dark:bg-boxdark transform transition-all scale-100 max-h-[90vh] overflow-y-auto">
-
-          <div class="flex justify-between items-center mb-6 border-b border-stroke pb-4">
-            <h3 class="text-xl font-bold text-black dark:text-white">Persetujuan Perubahan Data</h3>
-            <button @click="showApprovalModal = false" class="text-slate-500 hover:text-black">✕</button>
-          </div>
-
-          <div class="flex flex-col gap-6">
-            <div v-for="req in pendingRequests" :key="req.id" class="rounded border border-stroke p-4 bg-gray-50 dark:bg-meta-4">
-              <div class="flex justify-between items-start mb-3">
-                <div>
-                  <h4 class="font-bold text-black">{{ req.nama }} <span class="text-xs font-normal text-slate-500">({{ req.role }})</span></h4>
-                  <p class="text-xs text-slate-500">Diajukan: {{ req.waktu }}</p>
-                </div>
-                <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded border border-yellow-200">Pending</span>
-              </div>
-
-              <div class="grid grid-cols-2 gap-4 text-sm mb-4">
-                <div class="bg-red-50 p-3 rounded border border-red-100 text-red-700">
-                  <p class="font-bold text-xs uppercase mb-2 text-red-500">Data Lama</p>
-                  <p>Nama: {{ req.dataLama.name }}</p>
-                  <p>Telp: {{ req.dataLama.phone }}</p>
-                </div>
-                <div class="bg-green-50 p-3 rounded border border-green-100 text-green-700">
-                  <p class="font-bold text-xs uppercase mb-2 text-green-500">Data Baru</p>
-                  <p>Nama: {{ req.dataBaru.name }}</p>
-                  <p>Telp: {{ req.dataBaru.phone }}</p>
-                </div>
-              </div>
-
-              <div class="flex gap-3 justify-end">
-                <button @click="handleReject(req.id)" class="px-4 py-2 rounded border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium">Tolak</button>
-                <button @click="handleApprove(req)" class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 text-sm font-medium">Setujui Perubahan</button>
-              </div>
-            </div>
-          </div>
-
         </div>
       </div>
     </Teleport>

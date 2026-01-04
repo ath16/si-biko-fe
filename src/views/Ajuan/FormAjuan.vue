@@ -11,55 +11,55 @@ const isEditMode = computed(() => route.name === 'edit-ajuan' || !!route.params.
 
 const formData = ref({
   judul: '',
-  kategori: '',
-  dosenId: '',
+  kategori: '', // Ini akan dipeta ke 'jenis_layanan'
   tanggal: '',
   waktu: '',
-  deskripsi: ''
+  deskripsi: '' // Ini akan dipeta ke 'deskripsi_masalah'
 })
 
 const isSubmitting = ref(false)
 
-// Data Dummy Dosen
-const listDosen = [
-  { id: '198001', nama: 'Dr. Budi Santoso (PA)' },
-  { id: '198002', nama: 'Prof. Made (Kaprodi)' },
-  { id: 'K001', nama: 'Ibu Ratna, M.Psi (Konselor)' },
-]
-
 // Load Data jika Edit Mode
 onMounted(() => {
   if (isEditMode.value) {
-    // Simulasi Fetch Data dari API berdasarkan ID
-    // const ajuanId = route.params.id
-    // const data = await api.getAjuan(ajuanId)
-
-    // Kita isi dummy data untuk simulasi
+    // Simulasi Fetch Data (Nanti diganti API GET /api/ajuan/{id})
     formData.value = {
       judul: 'Konsultasi KRS Semester 5',
       kategori: 'Akademik',
-      dosenId: '198001',
       tanggal: '2025-12-20',
       waktu: '09:00',
-      deskripsi: 'Saya bingung memilih mata kuliah pilihan yang sesuai dengan skripsi saya nanti.'
+      deskripsi: 'Saya bingung memilih mata kuliah pilihan.'
     }
   }
 })
 
-// Fungsi Submit (Create / Update)
+// Fungsi Submit
 const handleSubmit = () => {
-  if (!formData.value.judul || !formData.value.dosenId || !formData.value.tanggal) {
-    alert("Mohon lengkapi semua data wajib!")
+  // 1. Validasi Frontend
+  if (!formData.value.judul || !formData.value.kategori || !formData.value.tanggal || !formData.value.waktu) {
+    alert("Mohon lengkapi semua data wajib (Judul, Jenis, Tanggal, Waktu).")
     return
   }
 
   isSubmitting.value = true
 
-  // Simulasi API Call
+  // 2. Persiapan Payload sesuai Controller Laravel
+  // Backend mengharapkan: judul_konseling, deskripsi_masalah, jenis_layanan, tanggal_jadwal
+  const payload = {
+    judul_konseling: formData.value.judul,
+    jenis_layanan: formData.value.kategori,
+    deskripsi_masalah: formData.value.deskripsi,
+    // Gabungkan Tanggal & Waktu menjadi format datetime (YYYY-MM-DD HH:mm:ss)
+    tanggal_jadwal: `${formData.value.tanggal} ${formData.value.waktu}:00`
+  }
+
+  console.log("Payload dikirim ke Backend:", payload)
+
+  // 3. Simulasi API Call
   setTimeout(() => {
     const pesan = isEditMode.value
       ? "Perubahan berhasil disimpan!"
-      : "Ajuan berhasil dikirim! Menunggu persetujuan Dosen."
+      : "Ajuan berhasil dikirim! Sistem akan otomatis meneruskan ke Dosen PA atau Konselor terkait."
 
     alert(pesan)
     isSubmitting.value = false
@@ -115,26 +115,6 @@ const handleCancel = () => router.back()
                   </select>
                   <span class="absolute top-1/2 right-4 z-30 -translate-y-1/2">
                     <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z" fill=""></path></svg>
-                  </span>
-                </div>
-              </div>
-
-              <div class="mb-4.5">
-                <label class="mb-2.5 block text-black dark:text-white">
-                  Tujuan Konseling (Dosen/Konselor) <span class="text-meta-1">*</span>
-                </label>
-                <div class="relative z-20 bg-transparent dark:bg-form-input">
-                  <select
-                    v-model="formData.dosenId"
-                    class="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-blue-light-500 active:border-blue-light-500 dark:border-form-strokedark dark:bg-form-input dark:focus:border-blue-light-500"
-                  >
-                    <option value="" disabled selected>Pilih Dosen Pembimbing</option>
-                    <option v-for="dosen in listDosen" :key="dosen.id" :value="dosen.id">
-                      {{ dosen.nama }}
-                    </option>
-                  </select>
-                  <span class="absolute top-1/2 right-4 z-30 -translate-y-1/2">
-                     <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z" fill=""></path></svg>
                   </span>
                 </div>
               </div>
@@ -201,16 +181,26 @@ const handleCancel = () => router.back()
         <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
           <div class="border-b border-stroke py-4 px-6.5 dark:border-strokedark">
             <h3 class="font-medium text-black dark:text-white">
-              Tips Pengajuan
+              Informasi Pengajuan
             </h3>
           </div>
           <div class="p-6.5">
-            <ul class="list-disc pl-5 text-sm text-slate-500 space-y-2">
-              <li>Pilih kategori yang paling sesuai dengan masalah Anda.</li>
-              <li>Dosen Pembimbing Akademik (PA) adalah prioritas utama untuk masalah akademik.</li>
-              <li>Jadwal yang Anda ajukan bersifat <b>Pengajuan</b>, Dosen berhak mengajukan jadwal pengganti (Reschedule).</li>
-              <li v-if="isEditMode" class="text-blue-600">
-                <b>Catatan Edit:</b> Mengubah jadwal akan membuat status ajuan kembali menjadi "Pending" menunggu persetujuan ulang.
+            <ul class="list-disc pl-5 text-sm text-slate-500 space-y-3">
+              <li>
+                <b>Pilih Kategori:</b> Sistem akan otomatis mengarahkan ajuan Anda ke Dosen PA atau Konselor yang sesuai.
+                <ul class="list-none pl-2 mt-1 text-xs space-y-1 border-l-2 border-slate-200">
+                  <li><b>Akademik dan Karir:</b> Ditangani Dosen PA.</li>
+                  <li><b>Pribadi dan Sosial:</b> Ditangani Dosen Konselor.</li>
+                </ul>
+              </li>
+              <li>
+                <b>Jadwal:</b> Jadwal yang Anda pilih bersifat <i>rencana</i>. Dosen dapat menyetujui atau mengajukan jadwal pengganti (Reschedule).
+              </li>
+              <li>
+                <b>Kerahasiaan:</b> Semua data dan cerita yang Anda sampaikan dijamin kerahasiaannya.
+              </li>
+              <li v-if="isEditMode" class="text-blue-600 bg-blue-50 p-2 rounded">
+                <b>Catatan Edit:</b> Mengubah data ajuan akan mereset status menjadi "Pending" jika sebelumnya sudah diproses.
               </li>
             </ul>
           </div>

@@ -1,40 +1,24 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router' // Import Router
+import { RouterLink, useRouter } from 'vue-router'
 import ModalTolak from '@/components/business/ajuan/ModalTolak.vue'
 import ModalReschedule from '@/components/business/ajuan/ModalReschedule.vue'
 
-const router = useRouter() // Init Router
+const router = useRouter()
 
-// Tambahkan 'request_delete'
-const statusPenanganan = ref<'pending' | 'ditolak' | 'reschedule' | 'proses' | 'selesai' | 'request_delete'>('pending') // Ubah default ke 'request_delete' untuk testing tampilan
+const statusPenanganan = ref<'pending' | 'ditolak' | 'reschedule' | 'proses' | 'selesai'>('pending')
 const catatanDosen = ref('')
 
 const showModalTolak = ref(false)
 const showModalReschedule = ref(false)
 
-// ... (Function Modal Tolak & Reschedule TETAP SAMA) ...
 const handleTolak = () => showModalTolak.value = true
-const onSubmitTolak = (alasan: string) => { /* logic lama */ statusPenanganan.value = 'ditolak'; showModalTolak.value = false }
+const onSubmitTolak = (alasan: string) => { statusPenanganan.value = 'ditolak'; showModalTolak.value = false }
 const handleReschedule = () => showModalReschedule.value = true
-const onSubmitReschedule = (data: any) => { /* logic lama */ statusPenanganan.value = 'reschedule'; showModalReschedule.value = false }
+const onSubmitReschedule = (data: any) => { statusPenanganan.value = 'reschedule'; showModalReschedule.value = false }
 const handleTerima = () => { if(confirm("Terima ajuan?")) statusPenanganan.value = 'proses' }
 const handleSelesai = () => { if(!catatanDosen.value) return alert("Isi catatan!"); statusPenanganan.value = 'selesai' }
 const handleRujuk = () => { if(!catatanDosen.value) return alert("Isi catatan!"); statusPenanganan.value = 'selesai' }
-
-// --- LOGIKA PERSETUJUAN HAPUS (BARU) ---
-const handleApproveDelete = () => {
-  if(confirm("Setujui penghapusan ajuan ini? Data akan hilang dari sistem.")) {
-    alert("Ajuan berhasil dihapus.")
-    router.push('/app/ajuan') // Kembali ke list karena data hilang
-  }
-}
-
-const handleRejectDelete = () => {
-  if(confirm("Tolak permintaan hapus? Status akan kembali Pending.")) {
-    statusPenanganan.value = 'pending'
-  }
-}
 </script>
 
 <template>
@@ -54,7 +38,8 @@ const handleRejectDelete = () => {
               <p class="text-sm">NIM: 240001</p>
             </div>
           </div>
-          <p class="text-sm italic">"Saya ingin menghapus ajuan ini karena salah input."</p> </div>
+          <p class="text-sm italic">"Saya ingin menghapus ajuan ini karena salah input."</p>
+        </div>
       </div>
     </div>
 
@@ -66,28 +51,7 @@ const handleRejectDelete = () => {
 
         <div class="p-6.5">
 
-          <div v-if="statusPenanganan === 'request_delete'" class="flex flex-col gap-4">
-            <div class="bg-red-50 text-red-800 p-4 rounded border border-red-200">
-              <div class="flex items-start gap-3">
-                <svg class="w-6 h-6 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                <div>
-                  <h4 class="font-bold text-lg">Permintaan Hapus</h4>
-                  <p class="text-sm mt-1">Mahasiswa mengajukan penghapusan untuk ajuan ini. Apakah Anda mengizinkan?</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-3 mt-2">
-              <button @click="handleApproveDelete" class="w-full bg-red-600 text-white p-3 rounded font-medium hover:bg-red-700 transition">
-                Izinkan & Hapus Permanen
-              </button>
-              <button @click="handleRejectDelete" class="w-full border border-stroke text-slate-600 p-3 rounded font-medium hover:bg-gray-50 transition">
-                Tolak (Kembalikan ke Pending)
-              </button>
-            </div>
-          </div>
-
-          <div v-else-if="statusPenanganan === 'pending'" class="flex flex-col gap-4">
+          <div v-if="statusPenanganan === 'pending'" class="flex flex-col gap-4">
             <div class="bg-blue-50 text-blue-800 p-3 rounded text-sm mb-2 border border-blue-100">
               Jadwal yang diminta: <b>20 Des 2025, 09:00 WITA</b>
             </div>

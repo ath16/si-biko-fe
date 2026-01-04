@@ -5,8 +5,7 @@ import ModalReschedule from '@/components/business/ajuan/ModalReschedule.vue'
 
 const router = useRouter()
 
-// Tambahkan 'request_delete' ke dalam kemungkinan status
-const status = ref('pending')
+const status = ref('pending') // Status ajuan
 
 const detailAjuan = ref({
   id: 101,
@@ -29,7 +28,6 @@ const getBadgeClass = (statusKey: string) => {
   const base = "rounded py-1 px-3 text-sm font-medium "
   switch(statusKey) {
     case 'pending': return base + "bg-yellow-600/10 text-yellow-600"
-    case 'request_delete': return base + "bg-red-600/10 text-red-600"
     case 'reschedule': return base + "bg-blue-600/10 text-blue-600"
     case 'disetujui': return base + "bg-green-600/10 text-green-600"
     case 'ditolak': return base + "bg-red-600/10 text-red-600"
@@ -55,17 +53,14 @@ const onSubmitReschedule = (data: any) => {
   showModalReschedule.value = false
 }
 
-// --- LOGIKA HAPUS DENGAN KONFIRMASI ---
+// --- HAPUS LANGSUNG (BACKEND SUPPORT) ---
 const handleHapus = () => {
-  if(confirm("Anda yakin ingin menghapus ajuan ini? Tindakan ini memerlukan persetujuan Dosen/Konselor.")) {
-    status.value = 'request_delete'
-    alert("Permintaan hapus dikirim. Menunggu konfirmasi Dosen.")
-  }
-}
-
-const batalkanHapus = () => {
-  if(confirm("Batalkan permintaan hapus?")) {
-    status.value = 'pending'
+  // Karena backend sudah mengizinkan hapus jika pending
+  if(confirm("Hapus ajuan ini secara permanen?")) {
+    // Panggil API DELETE /api/ajuan/{id}
+    console.log("Menghapus ajuan ID:", detailAjuan.value.id)
+    alert("Ajuan berhasil dihapus.")
+    router.push('/app/ajuan')
   }
 }
 </script>
@@ -81,9 +76,7 @@ const batalkanHapus = () => {
 
           <div class="mb-6 flex items-center justify-between">
             <span class="text-sm text-slate-500">ID: #{{ detailAjuan.id }}</span>
-
             <span v-if="status === 'pending'" :class="getBadgeClass('pending')">Menunggu Konfirmasi</span>
-            <span v-else-if="status === 'request_delete'" :class="getBadgeClass('request_delete')">Menunggu Persetujuan Hapus</span>
             <span v-else-if="status === 'reschedule'" :class="getBadgeClass('reschedule')">Tawaran Jadwal Baru</span>
             <span v-else-if="status === 'disetujui'" :class="getBadgeClass('disetujui')">Disetujui</span>
             <span v-else-if="status === 'ditolak'" :class="getBadgeClass('ditolak')">Ditolak</span>
@@ -113,15 +106,7 @@ const batalkanHapus = () => {
         </div>
         <div class="p-6.5">
 
-          <div v-if="status === 'request_delete'" class="text-center py-4">
-             <div class="bg-red-50 p-4 rounded mb-4 border border-red-100 text-red-800 text-sm">
-                <p class="font-bold">Permintaan Hapus Terkirim</p>
-                <p class="mt-1">Anda telah meminta untuk menghapus ajuan ini. Menunggu persetujuan Dosen.</p>
-             </div>
-             <button @click="batalkanHapus" class="text-sm text-slate-500 hover:text-black underline">Batalkan Permintaan Hapus</button>
-          </div>
-
-          <div v-else-if="status === 'reschedule'" class="flex flex-col gap-4">
+          <div v-if="status === 'reschedule'" class="flex flex-col gap-4">
              <div class="bg-blue-50 p-4 rounded border border-blue-100 text-blue-800 text-sm">
                 <p class="font-bold">Tawaran Jadwal Baru:</p>
                 <p>{{ detailAjuan.jadwalBaru.tanggal }} {{ detailAjuan.jadwalBaru.waktu }}</p>
