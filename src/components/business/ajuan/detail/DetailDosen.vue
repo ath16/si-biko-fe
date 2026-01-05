@@ -1,28 +1,105 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import axios from 'axios'
 import ModalTolak from '@/components/business/ajuan/ModalTolak.vue'
 import ModalReschedule from '@/components/business/ajuan/ModalReschedule.vue'
 
+const route = useRoute()
 const router = useRouter()
+const idAjuan = route.params.id
 
-const statusPenanganan = ref<'pending' | 'ditolak' | 'reschedule' | 'proses' | 'selesai'>('pending')
+const detailAjuan = ref<any>(null)
+const isLoading = ref(true)
 const catatanDosen = ref('')
 
 const showModalTolak = ref(false)
 const showModalReschedule = ref(false)
 
-const handleTolak = () => showModalTolak.value = true
-const onSubmitTolak = (alasan: string) => { statusPenanganan.value = 'ditolak'; showModalTolak.value = false }
-const handleReschedule = () => showModalReschedule.value = true
-const onSubmitReschedule = (data: any) => { statusPenanganan.value = 'reschedule'; showModalReschedule.value = false }
-const handleTerima = () => { if(confirm("Terima ajuan?")) statusPenanganan.value = 'proses' }
-const handleSelesai = () => { if(!catatanDosen.value) return alert("Isi catatan!"); statusPenanganan.value = 'selesai' }
-const handleRujuk = () => { if(!catatanDosen.value) return alert("Isi catatan!"); statusPenanganan.value = 'selesai' }
+// Fetch Data
+const fetchDetail = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const response = await axios.get(`http://localhost:8000/api/staff/ajuan/${idAjuan}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    detailAjuan.value = response.data
+    // Isi catatan dosen jika sudah ada
+    if(detailAjuan.value.catatan_sesi) {
+        catatanDosen.value = detailAjuan.value.catatan_sesi
+    }
+  } catch (error) {
+    alert("Data tidak ditemukan")
+    router.push('/app/ajuan')
+  } finally {
+    isLoading.value = false
+  }
+}
+onMounted(() => fetchDetail())
+
+// Actions
+const handleTerima = async () => {
+  if(!confirm("Terima ajuan ini?")) return
+  try {
+    const token = localStorage.getItem('token')
+    await axios.put(`http://localhost:8000/api/staff/ajuan/${idAjuan}/status`,
+      { status: 'disetujui' },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    fetchDetail() // Refresh
+  } catch (error) { alert("Gagal update status") }
+}
+
+const onSubmitTolak = async (alasan: string) => {
+  try {
+    const token = localStorage.getItem('token')
+    await axios.put(`http://localhost:8000/api/staff/ajuan/${idAjuan}/status`,
+      { status: 'ditolak', alasan_penolakan: alasan },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    showModalTolak.value = false
+    fetchDetail()
+  } catch (error) { alert("Gagal menolak") }
+}
+
+const onSubmitReschedule = async (data: any) => {
+  try {
+    const token = localStorage.getItem('token')
+    // Gabungkan tanggal dan waktu
+    const dateTime = `${data.tanggal} ${data.waktu}`
+
+    await axios.put(`http://localhost:8000/api/staff/ajuan/${idAjuan}/status`,
+      { status: 'reschedule', tanggal_jadwal: dateTime },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    showModalReschedule.value = false
+    fetchDetail()
+  } catch (error) { alert("Gagal reschedule") }
+}
+
+const handleSelesai = async (tingkat: string) => {
+  if(!catatanDosen.value) return alert("Mohon isi catatan sesi terlebih dahulu!")
+  if(!confirm(tingkat === 'Fakultas' ? "Rujuk kasus ini ke WD3?" : "Selesaikan kasus ini?")) return
+
+  try {
+    const token = localStorage.getItem('token')
+    await axios.put(`http://localhost:8000/api/staff/ajuan/${idAjuan}/complete`,
+      {
+        catatan_sesi: catatanDosen.value,
+        tingkat_penanganan: tingkat // 'Prodi' (Selesai) atau 'Fakultas' (Rujuk)
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    alert("Status berhasil diperbarui.")
+    router.push('/app/ajuan')
+  } catch (error) { alert("Gagal menyelesaikan sesi") }
+}
 </script>
 
 <template>
-  <div class="grid grid-cols-1 gap-9 sm:grid-cols-2">
+  <div v-if="isLoading" class="p-10 text-center">Memuat...</div>
+
+  <div v-else class="grid grid-cols-1 gap-9 sm:grid-cols-2">
     <div class="flex flex-col gap-9">
       <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
         <div class="border-b border-stroke py-4 px-6.5 dark:border-strokedark">
@@ -30,15 +107,19 @@ const handleRujuk = () => { if(!catatanDosen.value) return alert("Isi catatan!")
         </div>
         <div class="p-6.5 flex flex-col gap-4">
            <div class="flex items-center gap-4 mb-4">
-            <div class="h-14 w-14 rounded-full overflow-hidden">
-              <img src="/images/user/user.jpg" alt="User" />
+            <div class="h-14 w-14 rounded-full overflow-hidden bg-gray-200">
+              <img :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(detailAjuan.mahasiswa?.nama_lengkap || 'M')}&background=random`" alt="User" />
             </div>
             <div>
-              <h4 class="font-bold text-black dark:text-white">Atha Fajri</h4>
-              <p class="text-sm">NIM: 240001</p>
+              <h4 class="font-bold text-black dark:text-white">{{ detailAjuan.mahasiswa?.nama_lengkap }}</h4>
+              <p class="text-sm">NIM: {{ detailAjuan.nim }}</p>
+              <p class="text-sm text-gray-500">{{ detailAjuan.mahasiswa?.prodi }}</p>
             </div>
           </div>
-          <p class="text-sm italic">"Saya ingin menghapus ajuan ini karena salah input."</p>
+          <div class="bg-gray-50 p-4 rounded border border-gray-100">
+             <p class="text-xs font-bold text-gray-500 mb-1">MASALAH:</p>
+             <p class="text-sm italic">"{{ detailAjuan.deskripsi_masalah }}"</p>
+          </div>
         </div>
       </div>
     </div>
@@ -50,26 +131,36 @@ const handleRujuk = () => { if(!catatanDosen.value) return alert("Isi catatan!")
         </div>
 
         <div class="p-6.5">
-
-          <div v-if="statusPenanganan === 'pending'" class="flex flex-col gap-4">
+          <div v-if="detailAjuan.status === 'pending'" class="flex flex-col gap-4">
             <div class="bg-blue-50 text-blue-800 p-3 rounded text-sm mb-2 border border-blue-100">
-              Jadwal yang diminta: <b>20 Des 2025, 09:00 WITA</b>
+              Jadwal yang diminta: <b>{{ detailAjuan.tanggal_jadwal }}</b>
             </div>
             <button @click="handleTerima" class="flex justify-center rounded bg-blue-600 p-3 font-medium text-gray-100 hover:bg-blue-600/90 w-full">Terima & Mulai Konseling</button>
             <div class="grid grid-cols-2 gap-4">
-              <button @click="handleReschedule" class="flex justify-center rounded border border-yellow-300 text-yellow-600 p-3 font-medium hover:bg-yellow-600 hover:text-white transition">Reschedule</button>
-              <button @click="handleTolak" class="flex justify-center rounded border border-red-300 text-red-600 p-3 font-medium hover:bg-red-600 hover:text-white transition">Tolak</button>
+              <button @click="showModalReschedule = true" class="flex justify-center rounded border border-yellow-300 text-yellow-600 p-3 font-medium hover:bg-yellow-600 hover:text-white transition">Reschedule</button>
+              <button @click="showModalTolak = true" class="flex justify-center rounded border border-red-300 text-red-600 p-3 font-medium hover:bg-red-600 hover:text-white transition">Tolak</button>
             </div>
           </div>
 
-          <div v-else-if="statusPenanganan === 'proses'" class="flex flex-col gap-4">
-             <p>Sesi Berlangsung...</p>
-             <button @click="handleSelesai" class="bg-green-600 text-white p-3 rounded">Selesai</button>
+          <div v-else-if="detailAjuan.status === 'disetujui' || detailAjuan.status === 'reschedule'" class="flex flex-col gap-4">
+             <div class="bg-green-50 p-3 rounded text-green-800 border border-green-100 text-sm mb-2">
+                 Sesi Konseling Aktif / Terjadwal.
+             </div>
+
+             <label class="block text-sm font-medium">Catatan Sesi / Hasil Konseling</label>
+             <textarea v-model="catatanDosen" rows="4" class="w-full border p-3 rounded outline-none focus:border-blue-500" placeholder="Tulis hasil konseling disini..."></textarea>
+
+             <div class="flex flex-col gap-2 mt-2">
+                <button @click="handleSelesai('Prodi')" class="bg-green-600 text-white p-3 rounded font-medium hover:bg-green-700">Masalah Selesai</button>
+                <button @click="handleSelesai('Fakultas')" class="bg-purple-600 text-white p-3 rounded font-medium hover:bg-purple-700">Rujuk ke WD3 (Fakultas)</button>
+             </div>
           </div>
 
           <div v-else class="text-center p-6 bg-gray-50 rounded border border-gray-100">
-             <h3 class="font-bold">Status: {{ statusPenanganan.toUpperCase() }}</h3>
-             <RouterLink to="/app/ajuan" class="text-blue-600 underline">Kembali</RouterLink>
+             <h3 class="font-bold mb-2">Status: {{ detailAjuan.status.toUpperCase() }}</h3>
+             <p v-if="detailAjuan.tingkat_penanganan === 'Fakultas'" class="text-purple-600 text-sm font-medium">Dirujuk ke Fakultas (WD3)</p>
+             <p v-else class="text-green-600 text-sm font-medium">Selesai di tingkat Prodi</p>
+             <RouterLink to="/app/ajuan" class="text-blue-600 underline mt-4 block">Kembali</RouterLink>
           </div>
 
         </div>

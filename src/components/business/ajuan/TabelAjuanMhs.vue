@@ -1,13 +1,36 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import axios from 'axios'
 
-// Dummy Data (Nanti diganti API)
-const dataAjuan = ref([
-  { id: 1, judul: 'Konsultasi KRS Semester 5', jenis: 'Akademik', tgl: '20 Des 2025', status: 'pending' },
-  { id: 2, judul: 'Masalah Ekonomi UKT', jenis: 'Pribadi', tgl: '15 Des 2025', status: 'disetujui' },
-  { id: 3, judul: 'Sulit Fokus Belajar', jenis: 'Pribadi', tgl: '10 Nov 2025', status: 'selesai' },
-])
+const dataAjuan = ref([])
+const isLoading = ref(true)
+
+// Helper Format Tanggal Indonesia
+const formatDate = (dateString: string) => {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleDateString('id-ID', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  })
+}
+
+const fetchData = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const response = await axios.get('http://localhost:8000/api/mahasiswa/ajuan', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    dataAjuan.value = response.data
+  } catch (error) {
+    console.error("Gagal memuat data ajuan:", error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchData()
+})
 
 const getStatusBadge = (status: string) => {
   switch(status) {
@@ -15,7 +38,7 @@ const getStatusBadge = (status: string) => {
     case 'disetujui': return 'bg-green-600/10 text-green-600'
     case 'ditolak': return 'bg-red-600/10 text-red-600'
     case 'selesai': return 'bg-blue-600/10 text-blue-600'
-    case 'request_delete': return 'bg-gray-200 text-gray-600 border border-gray-300'
+    case 'reschedule': return 'bg-purple-600/10 text-purple-600'
     default: return 'bg-gray-100 text-gray-600'
   }
 }
@@ -36,19 +59,25 @@ const getStatusBadge = (status: string) => {
       <div class="col-span-3 sm:col-span-2 text-center"><p class="font-medium">Status & Aksi</p></div>
     </div>
 
-    <div v-for="item in dataAjuan" :key="item.id" class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5 items-center hover:bg-gray-50 dark:hover:bg-meta-4 transition">
+    <div v-if="isLoading" class="p-8 text-center text-gray-500">Memuat data...</div>
+
+    <div v-else-if="dataAjuan.length === 0" class="p-8 text-center text-gray-500">
+      Belum ada riwayat ajuan.
+    </div>
+
+    <div v-else v-for="item in dataAjuan" :key="item.id_ajuan" class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5 items-center hover:bg-gray-50 dark:hover:bg-meta-4 transition">
       <div class="col-span-3 sm:col-span-4">
-        <p class="text-sm font-medium text-black dark:text-white truncate">{{ item.judul }}</p>
-        <p class="text-xs text-slate-500">{{ item.jenis }}</p>
+        <p class="text-sm font-medium text-black dark:text-white truncate">{{ item.judul_konseling }}</p>
+        <p class="text-xs text-slate-500">{{ item.jenis_layanan }}</p>
       </div>
       <div class="col-span-2 hidden sm:block">
-        <p class="text-sm text-black dark:text-white">{{ item.tgl }}</p>
+        <p class="text-sm text-black dark:text-white">{{ formatDate(item.tanggal_pengajuan) }}</p>
       </div>
       <div class="col-span-3 sm:col-span-2 flex items-center justify-center gap-2">
-        <span :class="`px-2 py-1 rounded text-xs font-medium capitalize ${getStatusBadge(item.status)}`">
+        <span :class="`px-2 py-1 rounded text-xs font-medium uppercase ${getStatusBadge(item.status)}`">
           {{ item.status }}
         </span>
-        <RouterLink :to="`/app/ajuan/${item.id}`" class="text-blue-600 hover:underline text-sm ml-2">
+        <RouterLink :to="`/app/ajuan/${item.id_ajuan}`" class="text-blue-600 hover:underline text-sm ml-2">
           Detail
         </RouterLink>
       </div>

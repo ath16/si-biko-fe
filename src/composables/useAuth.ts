@@ -1,98 +1,73 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-// 1. Definisi Tipe Data User
 interface User {
   id: number | string
   name: string
+  username: string
   email: string
   role: 'mahasiswa' | 'dosen' | 'konselor' | 'wd3' | 'admin' | 'guest'
   photo: string
+  detail?: any
 }
 
-// 2. State Global (Disimpan di luar fungsi agar data menetap/persist)
-// Default-nya adalah 'guest' (belum login)
-const user = ref<User>({
+const storedUser = localStorage.getItem('user')
+const initialUser: User = storedUser ? JSON.parse(storedUser) : {
   id: '',
   name: '',
+  username: '',
   email: '',
   role: 'guest',
   photo: ''
-})
+}
+
+const user = ref<User>(initialUser)
 
 export function useAuth() {
   const router = useRouter()
 
-  // 3. Computed Properties (Helper untuk Cek Role di View/Sidebar)
   const isMahasiswa = computed(() => user.value.role === 'mahasiswa')
-  // Dosen dan Konselor seringkali punya hak akses yang mirip dalam konteks penanganan ajuan
   const isDosen = computed(() => ['dosen', 'konselor'].includes(user.value.role))
   const isWD3 = computed(() => user.value.role === 'wd3')
   const isAdmin = computed(() => user.value.role === 'admin')
   const isAuthenticated = computed(() => user.value.role !== 'guest')
 
-  // 4. Fungsi Login Simulasi
-  // Nanti fungsi ini bisa diganti dengan call API ke Backend
-  const login = (role: User['role']) => {
-    user.value.role = role
+  const setUser = (backendUser: any) => {
+    let realName = backendUser.username
+    let realEmail = backendUser.email
 
-    // Set Dummy Data sesuai Role agar terlihat real
-    switch (role) {
-      case 'mahasiswa':
-        user.value.id = '240001'
-        user.value.name = 'Atha Fajri'
-        user.value.email = 'atha@student.unud.ac.id'
-        user.value.photo = '/images/user/user.jpg'
-        break
-
-      case 'dosen':
-        user.value.id = '198001'
-        user.value.name = 'Dr. Budi Santoso'
-        user.value.email = 'budi@dosen.unud.ac.id'
-        user.value.photo = '/images/user/user.jpg'
-        break
-
-      case 'wd3':
-        user.value.id = '197501'
-        user.value.name = 'Prof. I Made WD3'
-        user.value.email = 'wd3@unud.ac.id'
-        user.value.photo = '/images/user/user.jpg'
-        break
-
-      case 'admin':
-        user.value.id = '999'
-        user.value.name = 'Admin Fakultas MIPA'
-        user.value.email = 'admin@mipa.unud.ac.id'
-        user.value.photo = '/images/user/user.jpg'
-        break
+    if (backendUser.role === 'mahasiswa' && backendUser.mahasiswa) {
+      realName = backendUser.mahasiswa.nama_lengkap
+      realEmail = backendUser.mahasiswa.email
+    }
+    else if (backendUser.role !== 'mahasiswa' && backendUser.staff) {
+      realName = backendUser.staff.nama_lengkap
+      realEmail = backendUser.staff.email
     }
 
-    // Redirect otomatis ke Dashboard setelah login
-    router.push('/app/dashboard')
+    // URL ini otomatis generate inisial dari nama (Misal: Atha Fajri -> AF)
+    const defaultPhoto = `https://ui-avatars.com/api/?name=${encodeURIComponent(realName)}&background=random&color=fff`
+
+    const newUserState: User = {
+      id: backendUser.id,
+      name: realName,
+      username: backendUser.username,
+      email: realEmail || 'user@unud.ac.id',
+      role: backendUser.role,
+      photo: defaultPhoto, // Langsung pakai URL ini
+      detail: backendUser.role === 'mahasiswa' ? backendUser.mahasiswa : backendUser.staff
+    }
+
+    user.value = newUserState
+    localStorage.setItem('user', JSON.stringify(newUserState))
   }
 
-  // 5. Fungsi Logout
   const logout = () => {
-    // Reset state ke Guest
-    user.value = {
-      id: '',
-      name: '',
-      email: '',
-      role: 'guest',
-      photo: ''
-    }
-    // Lempar ke halaman Login
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    user.value = { id: '', name: '', username: '', email: '', role: 'guest', photo: '' }
     router.push('/auth/signin')
   }
 
-  return {
-    user,
-    isMahasiswa,
-    isDosen,
-    isWD3,
-    isAdmin,
-    isAuthenticated,
-    login,
-    logout
-  }
+  return { user, isMahasiswa, isDosen, isWD3, isAdmin, isAuthenticated, setUser, logout }
 }

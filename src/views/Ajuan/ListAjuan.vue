@@ -2,10 +2,10 @@
 import { useAuth } from '@/composables/useAuth'
 import Breadcrumb from '@/components/common/PageBreadcrumb.vue'
 
-// Import Komponen Bisnis yang baru dibuat
 import TabelAjuanMhs from '@/components/business/ajuan/TabelAjuanMhs.vue'
 import TabelAjuanDosen from '@/components/business/ajuan/TabelAjuanDosen.vue'
 import TabelAjuanAdmin from '@/components/business/ajuan/TabelAjuanAdmin.vue'
+import TabelAjuanWD3 from '@/components/business/ajuan/TabelAjuanWD3.vue' // Import baru
 
 const { isMahasiswa, isDosen, isWD3, isAdmin } = useAuth()
 </script>
@@ -15,13 +15,11 @@ const { isMahasiswa, isDosen, isWD3, isAdmin } = useAuth()
     <Breadcrumb :pageTitle="isMahasiswa ? 'Riwayat Konseling' : 'Daftar Ajuan Masuk'" />
 
     <div class="flex flex-col gap-10">
-
       <TabelAjuanMhs v-if="isMahasiswa" />
 
-      <TabelAjuanDosen v-else-if="isDosen || isWD3" />
+      <TabelAjuanDosen v-else-if="isDosen" />
 
-      <TabelAjuanAdmin v-else-if="isAdmin" />
-
+      <TabelAjuanWD3 v-else-if="isWD3" /> <TabelAjuanAdmin v-else-if="isAdmin" />
     </div>
   </div>
 </template>

@@ -4,6 +4,7 @@ import { useAuth } from '@/composables/useAuth'
 // Import Layouts
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import AuthLayout from '@/components/layout/AuthLayout.vue'
+import CetakSurat from '@/views/Ajuan/CetakSurat.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -82,12 +83,6 @@ const router = createRouter({
           component: () => import('@/views/Profile/UserProfile.vue'),
           meta: { title: 'Profil Saya' }
         },
-        {
-          path: 'profile/edit-request',
-          name: 'profile-edit',
-          component: () => import('@/views/Profile/EditRequest.vue'),
-          meta: { title: 'Pengajuan Perubahan Data' }
-        },
 
         // --- Modul: ADMIN ---
         {
@@ -108,9 +103,12 @@ const router = createRouter({
     // 4. Cetak Surat Rujukan
     {
       path: '/print/surat-rujukan/:id',
-      name: 'print-surat',
-      component: () => import('@/views/Ajuan/CetakSurat.vue'),
-      meta: { title: 'Cetak Surat Rujukan', requiresAuth: true }
+      name: 'CetakSuratRujukan',
+      component: CetakSurat,
+      meta: {
+        requiresAuth: true,
+        title: 'Cetak Surat Rujukan'
+      }
     },
 
     // 5. ERROR PAGES (Tangkap link 404)

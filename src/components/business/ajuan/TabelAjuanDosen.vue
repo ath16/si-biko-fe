@@ -1,31 +1,77 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import axios from 'axios'
 import ModalTolak from '@/components/business/ajuan/ModalTolak.vue'
 
-// Dummy Data (Ajuan Masuk)
-const dataMasuk = ref([
-  { id: 101, mhs: 'Atha Fajri', nim: '240001', judul: 'Bimbingan Skripsi Bab 1', tgl: '21 Des 2025', status: 'pending' },
-  { id: 102, mhs: 'Siti Aminah', nim: '240005', judul: 'Konsultasi Nilai E', tgl: '22 Des 2025', status: 'pending' },
-])
-
+const dataMasuk = ref([])
+const isLoading = ref(true)
 const showTolak = ref(false)
-const selectedId = ref<number | null>(null) // Menyimpan ID item yang sedang diklik
+const selectedId = ref<number | null>(null)
 
-const handleTerima = (id: number) => {
-  alert(`Ajuan #${id} Ajuan diterima.`)
+const formatDate = (dateString: string) => {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleDateString('id-ID', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  })
 }
 
+// Fetch Data Ajuan Masuk
+const fetchData = async () => {
+  isLoading.value = true
+  try {
+    const token = localStorage.getItem('token')
+    const response = await axios.get('http://localhost:8000/api/staff/ajuan', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    dataMasuk.value = response.data
+  } catch (error) {
+    console.error("Gagal load data:", error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => fetchData())
+
+// Logika Terima
+const handleTerima = async (id: number) => {
+  if (!confirm("Terima ajuan ini?")) return
+
+  try {
+    const token = localStorage.getItem('token')
+    await axios.put(`http://localhost:8000/api/staff/ajuan/${id}/status`,
+      { status: 'disetujui' },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    alert("Ajuan diterima.")
+    fetchData() // Refresh data
+  } catch (error) {
+    console.error(error)
+    alert("Gagal memperbarui status.")
+  }
+}
+
+// Logika Tolak
 const handleTolak = (id: number) => {
   selectedId.value = id
   showTolak.value = true
 }
-const onSubmitTolak = (alasan: string) => {
-  console.log(`Menolak ID ${selectedId.value} karena: ${alasan}`)
-  // Hapus dari list atau update status
-  dataMasuk.value = dataMasuk.value.filter(item => item.id !== selectedId.value)
-  showTolak.value = false
-  alert("Berhasil menolak ajuan.")
+
+const onSubmitTolak = async (alasan: string) => {
+  try {
+    const token = localStorage.getItem('token')
+    await axios.put(`http://localhost:8000/api/staff/ajuan/${selectedId.value}/status`,
+      { status: 'ditolak', alasan_penolakan: alasan },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    alert("Ajuan berhasil ditolak.")
+    showTolak.value = false
+    fetchData() // Refresh data
+  } catch (error) {
+    console.error(error)
+    alert("Gagal menolak ajuan.")
+  }
 }
 </script>
 
@@ -41,25 +87,33 @@ const onSubmitTolak = (alasan: string) => {
       <div class="col-span-1 sm:col-span-2 text-center"><p class="font-medium">Aksi</p></div>
     </div>
 
-    <div v-for="item in dataMasuk" :key="item.id" class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5 items-center hover:bg-gray-50 dark:hover:bg-meta-4 transition">
+    <div v-if="isLoading" class="p-6 text-center text-gray-500">Memuat data...</div>
+    <div v-else-if="dataMasuk.length === 0" class="p-6 text-center text-gray-500">Tidak ada ajuan masuk.</div>
+
+    <div v-else v-for="item in dataMasuk" :key="item.id_ajuan" class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5 items-center hover:bg-gray-50 dark:hover:bg-meta-4 transition">
       <div class="col-span-3 sm:col-span-3">
-        <p class="text-sm font-bold text-black dark:text-white">{{ item.mhs }}</p>
+        <p class="text-sm font-bold text-black dark:text-white">{{ item.mahasiswa?.nama_lengkap || 'Unknown' }}</p>
         <p class="text-xs text-slate-500">{{ item.nim }}</p>
       </div>
       <div class="col-span-2 sm:col-span-3">
-        <p class="text-sm text-black dark:text-white truncate">{{ item.judul }}</p>
-        <p class="text-xs text-slate-500">{{ item.tgl }}</p>
+        <p class="text-sm text-black dark:text-white truncate">{{ item.judul_konseling }}</p>
+        <p class="text-xs text-slate-500">{{ formatDate(item.tanggal_pengajuan) }}</p>
+
+        <span v-if="item.status !== 'pending'" class="mt-1 inline-block text-[10px] px-2 py-0.5 rounded bg-gray-100 border border-gray-300 uppercase">
+            {{ item.status }}
+        </span>
       </div>
       <div class="col-span-1 sm:col-span-2 flex flex-col sm:flex-row items-center justify-center gap-2">
-        <button @click="handleTerima(item.id)" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-600/90">Terima</button>
-        <button @click="handleTolak(item.id)" class="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-600/90">Tolak</button>
-        <RouterLink :to="`/app/ajuan/${item.id}`" class="border border-blue-light-500 text-blue-600 px-2 py-1 rounded text-xs hover:bg-blue-700 hover:text-white">Detail</RouterLink>
+
+        <template v-if="item.status === 'pending'">
+            <button @click="handleTerima(item.id_ajuan)" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-600/90">Terima</button>
+            <button @click="handleTolak(item.id_ajuan)" class="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-600/90">Tolak</button>
+        </template>
+
+        <RouterLink :to="`/app/ajuan/${item.id_ajuan}`" class="border border-blue-light-500 text-blue-600 px-2 py-1 rounded text-xs hover:bg-blue-700 hover:text-white">Detail</RouterLink>
       </div>
     </div>
-    <ModalTolak
-      :isOpen="showTolak"
-      @close="showTolak = false"
-      @submit="onSubmitTolak"
-    />
+
+    <ModalTolak :isOpen="showTolak" @close="showTolak = false" @submit="onSubmitTolak" />
   </div>
 </template>

@@ -6,7 +6,6 @@ import Breadcrumb from '@/components/common/PageBreadcrumb.vue'
 import DetailMhs from '@/components/business/ajuan/detail/DetailMhs.vue'
 import DetailDosen from '@/components/business/ajuan/detail/DetailDosen.vue'
 import DetailWD3 from '@/components/business/ajuan/detail/DetailWD3.vue'
-import DetailAdmin from '@/components/business/ajuan/TabelAjuanAdmin.vue' // Admin pakai tabel aja cukup atau buat view baru
 
 const { isMahasiswa, isDosen, isWD3, isAdmin } = useAuth()
 </script>
@@ -20,7 +19,9 @@ const { isMahasiswa, isDosen, isWD3, isAdmin } = useAuth()
     <DetailWD3 v-else-if="isWD3" />
 
     <div v-else-if="isAdmin">
-        <div class="bg-blue-50 p-4 mb-4 text-blue-800 rounded">Mode Admin: Melihat sebagai Read-Only</div>
+        <div class="bg-blue-50 p-4 mb-4 text-blue-800 rounded border border-blue-200">
+            <strong>Mode Admin:</strong> Anda melihat detail ini dalam mode baca-saja.
+        </div>
         <DetailMhs />
     </div>
 

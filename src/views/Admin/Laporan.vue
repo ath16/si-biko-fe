@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Breadcrumb from '@/components/common/PageBreadcrumb.vue'
 import { ChevronDownIcon } from '@/icons'
 import html2pdf from 'html2pdf.js'
+import axios from 'axios'
 
 // --- STATE ---
 const filter = ref({
@@ -11,31 +12,73 @@ const filter = ref({
   jenis: 'Semua'
 })
 
+const reportData = ref([])
+const isLoading = ref(false)
 const isGenerating = ref(false)
 
-// Data Dummy Laporan
-const reportData = ref([
-  { id: 1, tanggal: '2025-12-01', mahasiswa: 'Atha Fajri', nim: '240001', jenis: 'Akademik', konselor: 'Dr. Budi', status: 'Selesai' },
-  { id: 2, tanggal: '2025-12-05', mahasiswa: 'Siti Aminah', nim: '240005', jenis: 'Pribadi', konselor: 'Ibu Ratna', status: 'Rujuk WD3' },
-  { id: 3, tanggal: '2025-12-10', mahasiswa: 'Budi Santoso', nim: '240010', jenis: 'Karir', konselor: 'Dr. Budi', status: 'Selesai' },
-  { id: 4, tanggal: '2025-12-15', mahasiswa: 'Dewi Lestari', nim: '240015', jenis: 'Akademik', konselor: 'Ibu Ratna', status: 'Ditolak' },
-])
-
-// --- FILTER LOGIC ---
-const filteredData = computed(() => {
-  return reportData.value.filter(item => {
-    // Filter Jenis
-    const matchJenis = filter.value.jenis === 'Semua' || item.jenis === filter.value.jenis
-
-    // Filter Tanggal
-    let matchDate = true
-    if (filter.value.startDate && filter.value.endDate) {
-      matchDate = item.tanggal >= filter.value.startDate && item.tanggal <= filter.value.endDate
-    }
-
-    return matchJenis && matchDate
+// Helper Format Tanggal Indonesia
+const formatDate = (dateString: string) => {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleDateString('id-ID', {
+    day: 'numeric', month: 'long', year: 'numeric'
   })
+}
+
+// Helper Menentukan Status Tampilan
+const getDisplayStatus = (item: any) => {
+  if (item.tingkat_penanganan === 'Universitas') return 'Rujuk Universitas'
+  if (item.tingkat_penanganan === 'Fakultas') return 'Rujuk Fakultas'
+  if (item.status === 'selesai') return 'Selesai'
+  if (item.status === 'ditolak') return 'Ditolak'
+  return 'Proses'
+}
+
+// --- FETCH DATA (INTEGRASI BE) ---
+const fetchLaporan = async () => {
+  isLoading.value = true
+  try {
+    const token = localStorage.getItem('token')
+
+    // Siapkan parameter query
+    const params: any = {}
+    if (filter.value.jenis !== 'Semua') params.jenis = filter.value.jenis
+    if (filter.value.startDate) params.start_date = filter.value.startDate
+    if (filter.value.endDate) params.end_date = filter.value.endDate
+
+    const response = await axios.get('http://localhost:8000/api/admin/laporan', {
+      headers: { Authorization: `Bearer ${token}` },
+      params: params
+    })
+
+    // Mapping Data Backend ke Format Laporan
+    reportData.value = response.data.map((item: any) => ({
+      id: item.id_ajuan,
+      tanggal: formatDate(item.tanggal_pengajuan),
+      mahasiswa: item.mahasiswa?.nama_lengkap || 'Unknown',
+      nim: item.nim,
+      jenis: item.jenis_layanan,
+      konselor: item.handler?.nama_lengkap || 'Belum Ditentukan',
+      status_raw: item.status, // Untuk logic hitungan
+      tingkat: item.tingkat_penanganan, // Untuk logic hitungan
+      display_status: getDisplayStatus(item) // Untuk tampilan tabel
+    }))
+
+  } catch (error) {
+    console.error("Gagal memuat laporan:", error)
+    alert("Gagal memuat data laporan.")
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Load data saat pertama kali buka
+onMounted(() => {
+  fetchLaporan()
 })
+
+// --- COMPUTED STATS ---
+const totalSelesai = computed(() => reportData.value.filter((i: any) => i.status_raw === 'selesai').length)
+const totalRujuk = computed(() => reportData.value.filter((i: any) => i.tingkat === 'Fakultas' || i.tingkat === 'Universitas').length)
 
 // --- PRINT LOGIC ---
 const handlePrint = () => {
@@ -77,35 +120,46 @@ const handlePrint = () => {
         <div class="w-full md:w-1/4 relative">
           <label class="mb-2 block text-sm font-medium text-black dark:text-white">Jenis Layanan</label>
           <div class="relative">
-            <select v-model="filter.jenis" class="w-full appearance-none rounded border border-stroke bg-transparent py-2 px-4 outline-none focus:border-blue-light-500 dark:border-form-strokedark dark:bg-form-input">
+            <select v-model="filter.jenis" class="w-full appearance-none rounded border border-stroke bg-transparent py-2 px-4 outline-none focus:border-blue-light-500 dark:border-form-strokedark dark:bg-form-input text-black dark:text-white">
               <option value="Semua">Semua Layanan</option>
               <option value="Akademik">Akademik</option>
               <option value="Pribadi">Pribadi</option>
               <option value="Karir">Karir</option>
+              <option value="Sosial">Sosial</option>
             </select>
-            <span class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
               <ChevronDownIcon class="w-4 h-4" />
             </span>
           </div>
         </div>
 
-        <div class="w-full md:w-1/4">
-          <button @click="handlePrint" :disabled="isGenerating" class="flex w-full justify-center gap-2 rounded bg-blue-600 py-2 px-6 font-medium text-white hover:bg-opacity-90 disabled:opacity-70">
-            <span v-if="isGenerating">Mencetak...</span>
-            <span v-else>Cetak PDF</span>
+        <div class="w-full md:w-1/4 flex gap-2">
+          <button @click="fetchLaporan" class="flex-1 justify-center rounded bg-blue-600 py-2 px-4 font-medium text-white hover:bg-blue-700 transition">
+             Tampilkan
+          </button>
+
+          <button @click="handlePrint" :disabled="isGenerating || reportData.length === 0" class="flex-1 justify-center rounded bg-gray-800 py-2 px-4 font-medium text-white hover:bg-gray-900 disabled:opacity-70 disabled:cursor-not-allowed transition">
+            {{ isGenerating ? '...' : 'PDF' }}
           </button>
         </div>
 
       </div>
     </div>
 
-    <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+    <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark overflow-auto">
 
-      <div id="report-area" class="p-8 bg-white text-black">
+      <div v-if="isLoading" class="p-10 text-center text-gray-500">
+        Mengambil data laporan...
+      </div>
+
+      <div v-else id="report-area" class="p-8 bg-white text-black min-w-[800px]">
         <div class="text-center mb-8 border-b-2 border-black pb-4">
           <h2 class="text-2xl font-bold uppercase">Laporan Rekapitulasi Layanan Bimbingan Konseling</h2>
           <h3 class="text-xl font-semibold">Fakultas Matematika dan Ilmu Pengetahuan Alam</h3>
-          <p class="text-sm mt-1">Periode: {{ filter.startDate || '...' }} s/d {{ filter.endDate || '...' }}</p>
+          <p class="text-sm mt-1">
+            Periode: {{ filter.startDate ? formatDate(filter.startDate) : 'Awal' }}
+            s/d {{ filter.endDate ? formatDate(filter.endDate) : 'Sekarang' }}
+          </p>
         </div>
 
         <table class="w-full table-auto border-collapse border border-black">
@@ -116,22 +170,27 @@ const handlePrint = () => {
               <th class="border border-black py-2 px-3 text-sm font-bold">Mahasiswa</th>
               <th class="border border-black py-2 px-3 text-sm font-bold">NIM</th>
               <th class="border border-black py-2 px-3 text-sm font-bold">Jenis</th>
-              <th class="border border-black py-2 px-3 text-sm font-bold">Konselor</th>
+              <th class="border border-black py-2 px-3 text-sm font-bold">PA / Konselor</th>
               <th class="border border-black py-2 px-3 text-sm font-bold">Status Akhir</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in filteredData" :key="item.id">
+            <tr v-for="(item, index) in reportData" :key="item.id">
               <td class="border border-black py-2 px-3 text-sm text-center">{{ index + 1 }}</td>
               <td class="border border-black py-2 px-3 text-sm">{{ item.tanggal }}</td>
               <td class="border border-black py-2 px-3 text-sm">{{ item.mahasiswa }}</td>
               <td class="border border-black py-2 px-3 text-sm">{{ item.nim }}</td>
               <td class="border border-black py-2 px-3 text-sm">{{ item.jenis }}</td>
               <td class="border border-black py-2 px-3 text-sm">{{ item.konselor }}</td>
-              <td class="border border-black py-2 px-3 text-sm">{{ item.status }}</td>
+              <td class="border border-black py-2 px-3 text-sm">
+                <span class="font-medium"
+                  :class="item.status_raw === 'selesai' ? 'text-green-700' : (item.status_raw === 'ditolak' ? 'text-red-700' : 'text-black')">
+                  {{ item.display_status }}
+                </span>
+              </td>
             </tr>
-            <tr v-if="filteredData.length === 0">
-              <td colspan="7" class="border border-black py-4 text-center text-sm italic">Tidak ada data pada periode ini.</td>
+            <tr v-if="reportData.length === 0">
+              <td colspan="7" class="border border-black py-4 text-center text-sm italic">Tidak ada data ditemukan pada periode ini.</td>
             </tr>
           </tbody>
         </table>
@@ -141,15 +200,15 @@ const handlePrint = () => {
             <table class="w-full text-sm font-bold">
               <tr>
                 <td class="py-1">Total Ajuan</td>
-                <td class="text-right">{{ filteredData.length }}</td>
+                <td class="text-right">{{ reportData.length }}</td>
               </tr>
               <tr>
-                <td class="py-1">Selesai</td>
-                <td class="text-right">{{ filteredData.filter(i => i.status === 'Selesai').length }}</td>
+                <td class="py-1">Status Selesai</td>
+                <td class="text-right">{{ totalSelesai }}</td>
               </tr>
               <tr>
-                <td class="py-1">Rujuk Univ</td>
-                <td class="text-right">{{ filteredData.filter(i => i.status.includes('Rujuk')).length }}</td>
+                <td class="py-1">Rujukan (Fakultas/Univ)</td>
+                <td class="text-right">{{ totalRujuk }}</td>
               </tr>
             </table>
           </div>
@@ -157,8 +216,9 @@ const handlePrint = () => {
 
         <div class="mt-16 flex justify-end">
           <div class="text-center w-64">
-            <p class="mb-20 text-sm">Denpasar, {{ new Date().toLocaleDateString('id-ID') }}</p>
-            <p class="font-bold border-b border-black inline-block text-sm">Administrator SI-BIKO</p>
+            <p class="mb-20 text-sm">Denpasar, {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</p>
+            <p class="font-bold inline-block text-sm">Administrator SI-BIKO</p>
+            <p class="font-bold border-t border-black inline-block text-sm text-white">Administrator SI-BIKO</p>
           </div>
         </div>
       </div>

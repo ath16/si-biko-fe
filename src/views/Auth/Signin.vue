@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import axios from 'axios' // Pastikan axios sudah terinstall
 
-const { login } = useAuth()
+const router = useRouter()
+const { setUser } = useAuth() // Asumsikan useAuth punya method setUser atau login yang fleksibel
 
 const username = ref('')
 const password = ref('')
 const error = ref('')
+const isSubmitting = ref(false)
 
-const handleLogin = () => {
+const handleLogin = async () => {
   error.value = ''
 
   if (!username.value || !password.value) {
@@ -17,25 +20,42 @@ const handleLogin = () => {
     return
   }
 
-  const input = username.value.toLowerCase()
+  isSubmitting.value = true
 
-  // LOGIKA NIM vs NIP vs ADMIN
-  if (input === 'admin') {
-    // 1. Admin login pakai username 'admin'
-    login('admin')
-  }
-  else if (input.startsWith('19')) {
-    // 2. NIP biasanya diawali tahun lahir (misal 1985...), asumsikan ini Dosen/WD3
-    // Untuk simulasi: jika ada kata 'wd3' di username atau NIP tertentu, jadikan WD3
-    if(input.includes('wd3')) {
-      login('wd3')
+  try {
+    // --- INTEGRASI BACKEND REAL ---
+    // Sesuaikan URL dengan backend Anda (biasanya http://localhost:8000/api/login)
+    const response = await axios.post('http://localhost:8000/api/login', {
+      username: username.value,
+      password: password.value
+    })
+
+    const { token, user } = response.data
+
+    // 1. Simpan Token
+    localStorage.setItem('token', token)
+
+    // 2. Simpan User Data (agar bisa dibaca komponen lain)
+    localStorage.setItem('user', JSON.stringify(user))
+
+    // 3. Update State Global (Composable)
+    // Jika useAuth Anda belum support setUser manual, Anda bisa modifikasi composable-nya nanti.
+    // Untuk saat ini kita simpan di localStorage dan redirect.
+    if(setUser) setUser(user)
+
+    // 4. Redirect Sesuai Role (Logic Backend sudah handle role, kita tinggal baca)
+    // Backend mengirim 'role' di dalam objek user
+    router.push('/app/dashboard')
+
+  } catch (err: any) {
+    if (err.response && err.response.status === 401) {
+      error.value = 'Username atau Password salah.'
     } else {
-      login('dosen')
+      error.value = 'Gagal terhubung ke server. Cek koneksi backend.'
     }
-  }
-  else {
-    // 3. NIM biasanya diawali angkatan (misal 240555...), asumsikan sisanya Mahasiswa
-    login('mahasiswa')
+    console.error("Login Error:", err)
+  } finally {
+    isSubmitting.value = false
   }
 }
 </script>
@@ -82,9 +102,6 @@ const handleLogin = () => {
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.1601 10.87C12.0601 10.86 11.9401 10.86 11.8301 10.87C9.45006 10.79 7.56006 8.84 7.56006 6.44C7.56006 3.99 9.54006 2 12.0001 2C14.4501 2 16.4401 3.99 16.4401 6.44C16.4301 8.84 14.5401 10.79 12.1601 10.87Z" stroke="#64748B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.15997 14.56C4.73997 16.18 4.73997 18.82 7.15997 20.43C9.90997 22.27 14.42 22.27 17.17 20.43C19.59 18.81 19.59 16.17 17.17 14.56C14.43 12.73 9.91997 12.73 7.15997 14.56Z" stroke="#64748B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
               </div>
-              <p class="text-xs text-gray-500 mt-2">
-                *Tips Testing: Ketik <b>'mhs'</b>, <b>'dosen'</b>, atau <b>'admin'</b> untuk login sesuai role.
-              </p>
             </div>
 
             <div class="mb-6">
@@ -102,15 +119,16 @@ const handleLogin = () => {
               </div>
             </div>
 
-            <div v-if="error" class="mb-5 text-red-500 text-sm font-medium">
+            <div v-if="error" class="mb-5 text-red-500 text-sm font-medium bg-red-50 p-3 rounded border border-red-200">
               {{ error }}
             </div>
 
             <div class="mb-5">
               <input
                 type="submit"
-                value="Masuk Sekarang"
-                class="w-full cursor-pointer rounded-lg border border-blue-light-500 bg-blue-600 p-4 font-medium text-white transition hover:bg-blue-600/90"
+                :value="isSubmitting ? 'Memproses...' : 'Masuk Sekarang'"
+                :disabled="isSubmitting"
+                class="w-full cursor-pointer rounded-lg border border-blue-light-500 bg-blue-600 p-4 font-medium text-white transition hover:bg-blue-600/90 disabled:opacity-70 disabled:cursor-not-allowed"
               />
             </div>
 
