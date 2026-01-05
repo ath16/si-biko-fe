@@ -157,7 +157,7 @@ const handleBack = () => router.back()
              <p v-if="detailAjuan.alasan_penolakan" class="text-sm bg-red-50 p-2 rounded text-left text-red-700">Alasan: {{ detailAjuan.alasan_penolakan }}</p>
           </div>
 
-          <button @click="handleBack" class="mt-6 w-full py-2 text-blue-600 hover:bg-blue-50 rounded">Kembali</button>
+          <button @click="handleBack" class="text-blue-600 font-medium hover:underline mt-6 block w-full">Kembali</button>
         </div>
       </div>
     </div>
