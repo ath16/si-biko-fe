@@ -5,7 +5,6 @@ import { ChevronDownIcon } from '@/icons'
 import html2pdf from 'html2pdf.js'
 import axios from 'axios'
 
-// --- STATE ---
 const filter = ref({
   startDate: '',
   endDate: '',
@@ -16,7 +15,6 @@ const reportData = ref([])
 const isLoading = ref(false)
 const isGenerating = ref(false)
 
-// Helper Format Tanggal Indonesia
 const formatDate = (dateString: string) => {
   if (!dateString) return '-'
   return new Date(dateString).toLocaleDateString('id-ID', {
@@ -24,7 +22,6 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// Helper Menentukan Status Tampilan
 const getDisplayStatus = (item: any) => {
   if (item.tingkat_penanganan === 'Universitas') return 'Rujuk Universitas'
   if (item.tingkat_penanganan === 'Fakultas') return 'Rujuk Fakultas'
@@ -33,13 +30,11 @@ const getDisplayStatus = (item: any) => {
   return 'Proses'
 }
 
-// --- FETCH DATA (INTEGRASI BE) ---
 const fetchLaporan = async () => {
   isLoading.value = true
   try {
     const token = localStorage.getItem('token')
 
-    // Siapkan parameter query
     const params: any = {}
     if (filter.value.jenis !== 'Semua') params.jenis = filter.value.jenis
     if (filter.value.startDate) params.start_date = filter.value.startDate
@@ -50,7 +45,6 @@ const fetchLaporan = async () => {
       params: params
     })
 
-    // Mapping Data Backend ke Format Laporan
     reportData.value = response.data.map((item: any) => ({
       id: item.id_ajuan,
       tanggal: formatDate(item.tanggal_pengajuan),
@@ -58,9 +52,9 @@ const fetchLaporan = async () => {
       nim: item.nim,
       jenis: item.jenis_layanan,
       konselor: item.handler?.nama_lengkap || 'Belum Ditentukan',
-      status_raw: item.status, // Untuk logic hitungan
-      tingkat: item.tingkat_penanganan, // Untuk logic hitungan
-      display_status: getDisplayStatus(item) // Untuk tampilan tabel
+      status_raw: item.status,
+      tingkat: item.tingkat_penanganan,
+      display_status: getDisplayStatus(item)
     }))
 
   } catch (error) {
@@ -71,16 +65,13 @@ const fetchLaporan = async () => {
   }
 }
 
-// Load data saat pertama kali buka
 onMounted(() => {
   fetchLaporan()
 })
 
-// --- COMPUTED STATS ---
 const totalSelesai = computed(() => reportData.value.filter((i: any) => i.status_raw === 'selesai').length)
 const totalRujuk = computed(() => reportData.value.filter((i: any) => i.tingkat === 'Fakultas' || i.tingkat === 'Universitas').length)
 
-// --- PRINT LOGIC ---
 const handlePrint = () => {
   isGenerating.value = true
   const element = document.getElementById('report-area')

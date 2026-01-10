@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 
-// Import Layouts
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import AuthLayout from '@/components/layout/AuthLayout.vue'
 import CetakSurat from '@/views/Ajuan/CetakSurat.vue'
@@ -20,7 +19,7 @@ const router = createRouter({
     // 2. AUTHENTICATION (Login/Register)
     {
       path: '/auth',
-      component: AuthLayout, // Menggunakan Layout khusus Auth
+      component: AuthLayout,
       children: [
         {
           path: 'signin',
@@ -40,7 +39,7 @@ const router = createRouter({
     // 3. MAIN APP (Perlu Login)
     {
       path: '/app',
-      component: AdminLayout, // Layout Dashboard (Sidebar + Header)
+      component: AdminLayout,
       meta: { requiresAuth: true },
       children: [
         {
@@ -50,7 +49,6 @@ const router = createRouter({
           meta: { title: 'Dashboard Utama' }
         },
 
-        // --- Modul Inti: AJUAN KONSELING ---
         {
           path: 'ajuan',
           name: 'ajuan-list',
@@ -76,7 +74,6 @@ const router = createRouter({
           meta: { title: 'Edit Ajuan' }
         },
 
-        // --- Modul: PROFIL ---
         {
           path: 'profile',
           name: 'profile',
@@ -84,7 +81,6 @@ const router = createRouter({
           meta: { title: 'Profil Saya' }
         },
 
-        // --- Modul: ADMIN ---
         {
           path: 'admin/users',
           name: 'admin-users',
@@ -100,7 +96,7 @@ const router = createRouter({
       ]
     },
 
-    // 4. Cetak Surat Rujukan
+    // 4. CETAK SURAT RUJUKAN
     {
       path: '/print/surat-rujukan/:id',
       name: 'CetakSuratRujukan',
@@ -111,7 +107,7 @@ const router = createRouter({
       }
     },
 
-    // 5. ERROR PAGES (Tangkap link 404)
+    // 5. ERROR PAGES
     {
       path: '/:pathMatch(.*)*',
       component: () => import('@/views/Errors/FourZeroFour.vue'),
@@ -119,7 +115,6 @@ const router = createRouter({
     }
   ],
 
-  // Scroll ke atas saat pindah halaman
   scrollBehavior(to, from, savedPosition) {
     return savedPosition || { left: 0, top: 0 }
   }

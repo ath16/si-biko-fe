@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-// Pastikan axios diimport (atau gunakan import api from '@/services/api')
 import axios from 'axios'
 
 const router = useRouter()
@@ -18,19 +17,16 @@ const form = ref({
 })
 
 const isSubmitting = ref(false)
-const errorMessage = ref('') // Tambahkan state untuk pesan error
+const errorMessage = ref('')
 
 const handleSignup = async () => {
-  // 1. Reset Error
   errorMessage.value = ''
 
-  // 2. Validasi Password
   if (form.value.password !== form.value.confirmPassword) {
     alert("Password dan Konfirmasi Password tidak sama!")
     return
   }
 
-  // 3. Validasi Data Wajib
   if (!form.value.nim || !form.value.nama_lengkap || !form.value.prodi || !form.value.nip_dosen_pa) {
     alert("Mohon lengkapi semua data wajib!")
     return
@@ -39,7 +35,6 @@ const handleSignup = async () => {
   isSubmitting.value = true
 
   try {
-    // --- INTEGRASI REAL KE BACKEND ---
     const payload = {
       nim: form.value.nim,
       nama_lengkap: form.value.nama_lengkap,
@@ -50,19 +45,16 @@ const handleSignup = async () => {
       password: form.value.password
     }
 
-    // Sesuaikan URL API Register Anda
-    // Jika backend running di port 8000
     const response = await axios.post('http://localhost:8000/api/register', payload)
 
     console.log("Response Register:", response.data)
 
     alert("Registrasi Berhasil! Akun Anda telah dibuat. Silakan Login.")
-    router.push('/auth/signin') // Redirect ke halaman login
+    router.push('/auth/signin')
 
   } catch (error: any) {
     console.error("Register Error:", error)
 
-    // Menangkap pesan error dari backend (misal: NIM sudah ada, NIP Dosen salah)
     if (error.response && error.response.data && error.response.data.message) {
       errorMessage.value = error.response.data.message
       alert("Gagal Mendaftar: " + errorMessage.value)

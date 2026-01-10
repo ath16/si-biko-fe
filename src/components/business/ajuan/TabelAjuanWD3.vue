@@ -13,12 +13,10 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// Fetch Data khusus WD3
 const fetchData = async () => {
   isLoading.value = true
   try {
     const token = localStorage.getItem('token')
-    // Panggil Endpoint WD3
     const response = await axios.get('http://localhost:8000/api/wd3/ajuan', {
       headers: { Authorization: `Bearer ${token}` }
     })

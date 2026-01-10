@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watchEffect } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Breadcrumb from '@/components/common/PageBreadcrumb.vue'
 import { useAuth } from '@/composables/useAuth'
 import axios from 'axios'
@@ -7,11 +7,11 @@ import axios from 'axios'
 const { user, setUser } = useAuth()
 const isSubmitting = ref(false)
 const isLoading = ref(true)
+const showPassModal = ref(false)
+const passForm = ref({ current: '', new: '', confirm: '' })
 
-// Helper: Cek apakah user adalah Mahasiswa
 const isMahasiswa = computed(() => user.value.role === 'mahasiswa')
 
-// 1. Logika Bio Dinamis (Point 4)
 const defaultBio = computed(() => {
   switch (user.value.role) {
     case 'mahasiswa': return 'Mahasiswa aktif Fakultas MIPA Universitas Udayana.'
@@ -23,7 +23,6 @@ const defaultBio = computed(() => {
   }
 })
 
-// 2. State Form
 const formData = ref({
   nama_lengkap: '',
   no_hp: '',
@@ -35,27 +34,23 @@ const formData = ref({
 const dosenPa = ref({
   nama: 'Belum Ditentukan',
   nip: '-',
+  no_hp: '-',
+  email: '-',
   foto: ''
 })
 
-// 3. Computed Image (Point 1 - Agar Admin juga muncul fotonya)
-// Menggunakan UI Avatars sebagai sumber utama, bukan hanya fallback error
 const generatedAvatar = computed(() => {
   const name = formData.value.nama_lengkap || user.value.name || 'User'
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=256`
 })
 
-// 4. Fetch Data Profil
 const fetchProfile = async () => {
   isLoading.value = true
+  const token = localStorage.getItem('token')
+  const config = { headers: { Authorization: `Bearer ${token}` } }
 
-  // A. JIKA MAHASISWA: Ambil data dari Database via API
-  if (isMahasiswa.value) {
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) return
-
-      const config = { headers: { Authorization: `Bearer ${token}` } }
+  try {
+    if (isMahasiswa.value) {
       const response = await axios.get('http://localhost:8000/api/mahasiswa/profile', config)
       const data = response.data
 
@@ -65,30 +60,37 @@ const fetchProfile = async () => {
       formData.value.prodi = data.prodi || ''
       formData.value.bio = defaultBio.value
 
-      // Mapping Dosen PA
       if (data.staff) {
           dosenPa.value = {
               nama: data.staff.nama_lengkap || 'Nama Tidak Tersedia',
               nip: data.staff.nip || '-',
+              no_hp: data.staff.no_hp || '-',
+              email: data.staff.email || '-',
               foto: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.staff.nama_lengkap)}&background=random`
           }
       }
-    } catch (error) {
-      console.error("Gagal mengambil data profil:", error)
     }
-  }
-  // B. JIKA STAFF/ADMIN: Ambil dari State Auth (Read Only)
-  else {
+    else {
+      let endpoint = 'http://localhost:8000/api/staff/profile'
+      if (user.value.role === 'wd3') endpoint = 'http://localhost:8000/api/wd3/profile'
+      if (user.value.role === 'admin') endpoint = 'http://localhost:8000/api/admin/profile'
+
+      const response = await axios.get(endpoint, config)
+      const data = response.data
+
+      formData.value.nama_lengkap = data.nama_lengkap || user.value.name
+      formData.value.email = data.email || user.value.email || '-'
+      formData.value.no_hp = data.no_hp || '-'
+      formData.value.prodi = data.jabatan || user.value.role.toUpperCase()
+      formData.value.bio = defaultBio.value
+    }
+  } catch (error) {
+    console.error("Gagal ambil profil:", error)
     formData.value.nama_lengkap = user.value.name
     formData.value.email = user.value.email
-    formData.value.bio = defaultBio.value
-    // Staff biasanya tidak punya 'prodi' spesifik di tabel users/staff, kecuali relasi khusus
-    // Kita kosongkan atau isi jabatan jika ada di detail
-    formData.value.prodi = user.value.detail?.jabatan || ''
-    formData.value.no_hp = user.value.detail?.no_hp || '-'
+  } finally {
+    isLoading.value = false
   }
-
-  isLoading.value = false
 }
 
 onMounted(() => {
@@ -96,7 +98,7 @@ onMounted(() => {
 })
 
 const handleSave = async () => {
-  if (!isMahasiswa.value) return // Guard: Staff tidak boleh save
+  if (!isMahasiswa.value) return
 
   if (!formData.value.nama_lengkap || !formData.value.no_hp || !formData.value.prodi) {
     alert("Nama Lengkap, No HP, dan Prodi wajib diisi.")
@@ -117,20 +119,31 @@ const handleSave = async () => {
     }
 
     await axios.post('http://localhost:8000/api/mahasiswa/update-profile', payload, config)
-
     alert("Profil berhasil diperbarui!")
-
     const updatedUser = { ...user.value, name: payload.nama_lengkap }
     setUser(updatedUser)
 
   } catch (error: any) {
-    if (error.response) {
-       alert("Gagal: " + (error.response.data.message || "Terjadi kesalahan server."))
-    } else {
-       alert("Gagal terhubung ke server.")
-    }
+    alert("Gagal update profile.")
   } finally {
     isSubmitting.value = false
+  }
+}
+
+const handleChangePassword = async () => {
+  if (passForm.value.new !== passForm.value.confirm) return alert("Password baru tidak cocok!")
+  try {
+    const token = localStorage.getItem('token')
+    await axios.post('http://localhost:8000/api/change-password', {
+       current_password: passForm.value.current,
+       new_password: passForm.value.new,
+       new_password_confirmation: passForm.value.confirm
+    }, { headers: { Authorization: `Bearer ${token}` } })
+    alert("Password berhasil diubah!")
+    showPassModal.value = false
+    passForm.value = { current: '', new: '', confirm: '' }
+  } catch (err: any) {
+    alert("Gagal: " + (err.response?.data?.message || "Cek password lama Anda."))
   }
 }
 
@@ -155,117 +168,123 @@ const idLabel = computed(() => user.value.role === 'mahasiswa' ? 'NIM' : 'NIP')
             </div>
             </div>
             <div class="mt-4">
-            <h3 class="mb-1.5 text-2xl font-semibold text-black dark:text-white">{{ formData.nama_lengkap || user.name }}</h3>
-
-            <p class="font-medium text-slate-500">
-                {{ displayRole }}
-                <span v-if="formData.prodi"> - {{ formData.prodi }}</span>
-            </p>
-
-            <div class="mt-4 flex flex-wrap justify-center gap-4">
-                <div class="flex items-center gap-2 px-4 py-1 rounded bg-green-600/10 text-green-600 border border-green-100/20 text-sm font-medium">
-                    <span class="w-2 h-2 rounded-full bg-green-600"></span> Status: Aktif
-                </div>
-                <div class="flex items-center gap-2 px-4 py-1 rounded bg-blue-600/10 text-blue-600 border border-blue-light-500/20 text-sm font-medium">
-                    {{ idLabel }}: {{ user.username }}
-                </div>
-            </div>
+            <h3 class="mb-1.5 text-2xl font-semibold text-black dark:text-white">{{ formData.nama_lengkap }}</h3>
+            <p class="font-medium text-slate-500">{{ displayRole }}</p>
             </div>
         </div>
         </div>
 
         <div class="grid grid-cols-1 gap-9 sm:grid-cols-2">
+
         <div class="flex flex-col gap-9">
             <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
             <div class="border-b border-stroke py-4 px-6.5 dark:border-strokedark">
-                <h3 class="font-medium text-black dark:text-white">Informasi Pribadi</h3>
+                <h3 class="font-medium text-black dark:text-white">Informasi Kontak</h3>
             </div>
-
             <form @submit.prevent="handleSave">
                 <div class="p-6.5">
+
                 <div class="mb-4.5">
                     <label class="mb-2.5 block text-black dark:text-white">Nama Lengkap</label>
-                    <input
-                        v-model="formData.nama_lengkap"
-                        type="text"
-                        :disabled="!isMahasiswa"
-                        class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-blue-600 dark:border-form-strokedark dark:bg-form-input disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-meta-4"
-                    />
-                </div>
-
-                <div v-if="isMahasiswa" class="mb-4.5">
-                    <label class="mb-2.5 block text-black dark:text-white">Program Studi</label>
-                    <input
-                        v-model="formData.prodi"
-                        type="text"
-                        disabled
-                        class="w-full cursor-not-allowed rounded border-[1.5px] border-stroke bg-gray-200 py-3 px-5 font-medium outline-none transition dark:bg-meta-4 dark:border-form-strokedark"
-                    />
+                    <input v-model="formData.nama_lengkap" type="text" :disabled="!isMahasiswa"
+                        class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-blue-600 disabled:bg-gray-100 dark:disabled:bg-meta-4" />
                 </div>
 
                 <div class="mb-4.5">
-                    <label class="mb-2.5 block text-black dark:text-white">Nomor Telepon / WhatsApp</label>
-                    <input
-                        v-model="formData.no_hp"
-                        type="text"
-                        :disabled="!isMahasiswa"
-                        class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-blue-600 dark:border-form-strokedark dark:bg-form-input disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-meta-4"
-                    />
+                    <label class="mb-2.5 block text-black dark:text-white">
+                        {{ isMahasiswa ? 'Program Studi' : 'Jabatan' }}
+                    </label>
+                    <input v-model="formData.prodi" type="text" disabled
+                        class="w-full cursor-not-allowed rounded border-[1.5px] border-stroke bg-gray-100 py-3 px-5 outline-none transition dark:bg-meta-4" />
+                </div>
+
+                <div class="mb-4.5">
+                    <label class="mb-2.5 block text-black dark:text-white">Nomor HP / WhatsApp</label>
+                    <input v-model="formData.no_hp" type="text" :disabled="!isMahasiswa"
+                        class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-blue-600 disabled:bg-gray-100 dark:disabled:bg-meta-4" />
                 </div>
 
                 <div class="mb-4.5">
                     <label class="mb-2.5 block text-black dark:text-white">Email</label>
-                    <input v-model="formData.email" type="email" disabled class="w-full cursor-not-allowed rounded border-[1.5px] border-stroke bg-gray-200 py-3 px-5 font-medium outline-none transition dark:bg-meta-4 dark:border-form-strokedark" />
+                    <input v-model="formData.email" type="email" disabled
+                        class="w-full cursor-not-allowed rounded border-[1.5px] border-stroke bg-gray-100 py-3 px-5 outline-none transition dark:bg-meta-4" />
                 </div>
 
-                <button
-                    v-if="isMahasiswa"
-                    type="submit"
-                    :disabled="isSubmitting"
-                    class="flex w-full justify-center rounded bg-blue-600 p-3 font-medium text-gray-100 hover:bg-blue-600/90 transition disabled:opacity-70"
-                >
+                <button v-if="isMahasiswa" type="submit" :disabled="isSubmitting"
+                    class="flex w-full justify-center rounded bg-blue-600 p-3 font-medium text-gray-100 hover:bg-blue-700 transition">
                     {{ isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan' }}
                 </button>
-                <div v-else class="text-sm text-slate-500 italic text-center">
-                    *Data Staff/Admin dikelola oleh Administrator sistem.
+
+                <div v-else class="text-sm text-slate-500 italic text-center bg-yellow-50 p-2 rounded border border-yellow-100 text-yellow-700">
+                    *Data Staff hanya dapat diubah oleh Administrator.
                 </div>
+
                 </div>
             </form>
             </div>
         </div>
 
         <div class="flex flex-col gap-9">
+
             <div v-if="isMahasiswa" class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-            <div class="border-b border-stroke py-4 px-6.5 dark:border-strokedark flex items-center gap-2">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              <div class="border-b border-stroke py-4 px-6.5 dark:border-strokedark">
                 <h3 class="font-medium text-black dark:text-white">Dosen Pembimbing Akademik</h3>
-            </div>
-            <div class="p-6.5 flex flex-col gap-6">
-                <div class="flex items-start gap-4">
-                <div class="h-12 w-12 flex-shrink-0 rounded-full bg-slate-200 overflow-hidden">
+              </div>
+              <div class="p-6.5 flex flex-col gap-6">
+                <div class="flex items-center gap-4">
+                  <div class="h-14 w-14 rounded-full bg-slate-200 overflow-hidden">
                     <img :src="dosenPa.foto" alt="Foto" class="h-full w-full object-cover" />
-                </div>
-                <div class="w-full">
+                  </div>
+                  <div>
                     <h4 class="text-sm font-bold text-black dark:text-white">{{ dosenPa.nama }}</h4>
-                    <p class="text-xs text-slate-500 mb-1">NIP: {{ dosenPa.nip }}</p>
-                    <div class="flex items-center justify-between mt-2">
-                        <span class="text-xs bg-slate-100 px-2 py-1 rounded dark:bg-meta-4 text-slate-600">PA</span>
-                    </div>
+                    <p class="text-xs text-slate-500">NIP.          : {{ dosenPa.nip }}</p>
+                    <p class="text-xs text-slate-500">No. Handphone : {{ dosenPa.no_hp }}</p>
+                    <p class="text-xs text-slate-500">Email         : {{ dosenPa.email }}</p>
+                  </div>
                 </div>
-                </div>
-            </div>
+              </div>
             </div>
 
             <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-            <div class="border-b border-stroke py-4 px-6.5 dark:border-strokedark">
+              <div class="border-b border-stroke py-4 px-6.5 dark:border-strokedark">
                 <h3 class="font-medium text-black dark:text-white">Tentang Saya</h3>
+              </div>
+              <div class="p-6.5">
+                <textarea v-model="formData.bio" rows="4" disabled class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition cursor-not-allowed text-slate-500"></textarea>
+
+                <button type="button" @click="showPassModal = true" class="mt-4 w-full rounded border border-blue-600 p-3 font-medium text-blue-600 hover:bg-blue-50 transition">
+                    Ubah Password
+                </button>
+              </div>
             </div>
-            <div class="p-6.5">
-                <textarea v-model="formData.bio" rows="4" disabled class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition dark:border-form-strokedark dark:bg-form-input cursor-not-allowed text-slate-500"></textarea>
-            </div>
-            </div>
-        </div>
+          </div>
         </div>
     </div>
+
+    <Teleport to="body">
+      <div v-if="showPassModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+        <div class="w-full max-w-md rounded-lg bg-white p-8 dark:bg-boxdark shadow-lg">
+          <h3 class="mb-4 text-xl font-bold text-black dark:text-white">Ubah Password</h3>
+          <form @submit.prevent="handleChangePassword">
+            <div class="mb-4">
+              <label class="block mb-2 text-sm">Password Lama</label>
+              <input v-model="passForm.current" type="password" class="w-full border rounded p-2 dark:bg-meta-4 dark:border-strokedark" required />
+            </div>
+            <div class="mb-4">
+              <label class="block mb-2 text-sm">Password Baru</label>
+              <input v-model="passForm.new" type="password" class="w-full border rounded p-2 dark:bg-meta-4 dark:border-strokedark" required />
+            </div>
+            <div class="mb-6">
+              <label class="block mb-2 text-sm">Konfirmasi Password Baru</label>
+              <input v-model="passForm.confirm" type="password" class="w-full border rounded p-2 dark:bg-meta-4 dark:border-strokedark" required />
+            </div>
+            <div class="flex justify-end gap-3">
+              <button type="button" @click="showPassModal = false" class="text-slate-500 hover:text-black px-4">Batal</button>
+              <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Simpan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

@@ -15,7 +15,6 @@ const handleSubmit = () => {
     return alert("Mohon lengkapi semua data reschedule.")
   }
   emit('submit', { ...form.value })
-  // Reset form setelah submit
   form.value = { tanggal: '', waktu: '', alasan: '' }
 }
 </script>

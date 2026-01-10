@@ -16,7 +16,6 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// Fetch Data Ajuan Masuk
 const fetchData = async () => {
   isLoading.value = true
   try {
@@ -34,7 +33,6 @@ const fetchData = async () => {
 
 onMounted(() => fetchData())
 
-// Logika Terima
 const handleTerima = async (id: number) => {
   if (!confirm("Terima ajuan ini?")) return
 
@@ -45,14 +43,13 @@ const handleTerima = async (id: number) => {
       { headers: { Authorization: `Bearer ${token}` } }
     )
     alert("Ajuan diterima.")
-    fetchData() // Refresh data
+    fetchData()
   } catch (error) {
     console.error(error)
     alert("Gagal memperbarui status.")
   }
 }
 
-// Logika Tolak
 const handleTolak = (id: number) => {
   selectedId.value = id
   showTolak.value = true
@@ -67,7 +64,7 @@ const onSubmitTolak = async (alasan: string) => {
     )
     alert("Ajuan berhasil ditolak.")
     showTolak.value = false
-    fetchData() // Refresh data
+    fetchData()
   } catch (error) {
     console.error(error)
     alert("Gagal menolak ajuan.")
@@ -99,8 +96,14 @@ const onSubmitTolak = async (alasan: string) => {
         <p class="text-sm text-black dark:text-white truncate">{{ item.judul_konseling }}</p>
         <p class="text-xs text-slate-500">{{ formatDate(item.tanggal_pengajuan) }}</p>
 
-        <span v-if="item.status !== 'pending'" class="mt-1 inline-block text-[10px] px-2 py-0.5 rounded bg-gray-100 border border-gray-300 uppercase">
-            {{ item.status }}
+        <span v-if="item.status !== 'pending'"
+            :class="`mt-1 inline-block text-[10px] px-2 py-0.5 rounded uppercase border ${
+              item.status === 'selesai' ? 'bg-green-100 text-green-700 border-green-200' :
+              item.status.includes('wd3') || item.status === 'rujuk universitas' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+              item.status === 'ditolak' ? 'bg-red-100 text-red-700 border-red-200' :
+              'bg-gray-100 border-gray-300'
+            }`">
+          {{ item.status === 'rujuk universitas' ? 'Rujuk Univ' : item.status }}
         </span>
       </div>
       <div class="col-span-1 sm:col-span-2 flex flex-col sm:flex-row items-center justify-center gap-2">

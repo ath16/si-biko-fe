@@ -3,15 +3,12 @@ import { ref, onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import axios from 'axios'
 
-// --- STATE ---
 const allData = ref<any[]>([])
 const isLoading = ref(false)
 
-// Pagination Config
 const currentPage = ref(1)
 const itemsPerPage = 10
 
-// Filter State (Default Kosong agar menampilkan semua)
 const filter = ref({
   startDate: '',
   endDate: '',
@@ -19,7 +16,6 @@ const filter = ref({
   status: 'Semua'
 })
 
-// --- HELPER ---
 const formatDate = (dateString: string) => {
   if (!dateString) return '-'
   return new Date(dateString).toLocaleDateString('id-ID', {
@@ -27,26 +23,21 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// Warna Badge Status
 const getStatusBadge = (status: string, tingkat: string) => {
-    // Khusus Rujukan
     if (tingkat === 'Fakultas' && status !== 'selesai') return 'bg-purple-100 text-purple-700 border-purple-200'
     if (tingkat === 'Universitas') return 'bg-indigo-100 text-indigo-700 border-indigo-200'
 
     switch(status) {
-      // Status Level Prodi (Dosen)
       case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
       case 'reschedule': return 'bg-orange-100 text-orange-700 border-orange-200'
       case 'disetujui': return 'bg-green-100 text-green-700 border-green-200'
       case 'ditolak': return 'bg-red-100 text-red-700 border-red-200'
 
-      // Status Level Fakultas (WD3)
       case 'pending wd3': return 'bg-purple-100 text-purple-700 border-purple-200'
       case 'reschedule wd3': return 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200'
       case 'disetujui wd3': return 'bg-teal-100 text-teal-700 border-teal-200'
       case 'ditolak wd3': return 'bg-rose-100 text-rose-700 border-rose-200'
 
-      // Status Akhir
       case 'rujuk universitas': return 'bg-indigo-100 text-indigo-700 border-indigo-200'
       case 'selesai': return 'bg-blue-100 text-blue-700 border-blue-200'
 
@@ -54,20 +45,17 @@ const getStatusBadge = (status: string, tingkat: string) => {
     }
 }
 
-// Label Status Custom
 const getStatusLabel = (item: any) => {
     if (item.tingkat_penanganan === 'Universitas') return 'Rujuk Univ'
     if (item.tingkat_penanganan === 'Fakultas' && item.status !== 'selesai') return 'Rujuk Fakultas'
     return item.status
 }
 
-// --- FETCH DATA (TRIGGER TOMBOL) ---
 const fetchData = async () => {
   isLoading.value = true
   try {
     const token = localStorage.getItem('token')
 
-    // Kirim parameter filter ke backend
     const params: any = {}
     if (filter.value.jenis !== 'Semua') params.jenis = filter.value.jenis
     if (filter.value.status !== 'Semua') params.status = filter.value.status
@@ -80,7 +68,7 @@ const fetchData = async () => {
     })
 
     allData.value = response.data
-    currentPage.value = 1 // Reset ke halaman 1 setiap kali fetch baru
+    currentPage.value = 1
 
   } catch (error) {
     console.error("Gagal load data admin:", error)
@@ -90,10 +78,8 @@ const fetchData = async () => {
   }
 }
 
-// Load otomatis saat pertama buka (tanpa filter = semua data)
 onMounted(() => fetchData())
 
-// --- LOGIC PAGINATION ---
 const totalPages = computed(() => Math.ceil(allData.value.length / itemsPerPage))
 
 const paginatedData = computed(() => {

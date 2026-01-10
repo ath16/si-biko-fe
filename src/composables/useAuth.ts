@@ -45,7 +45,6 @@ export function useAuth() {
       realEmail = backendUser.staff.email
     }
 
-    // URL ini otomatis generate inisial dari nama (Misal: Atha Fajri -> AF)
     const defaultPhoto = `https://ui-avatars.com/api/?name=${encodeURIComponent(realName)}&background=random&color=fff`
 
     const newUserState: User = {
@@ -54,7 +53,7 @@ export function useAuth() {
       username: backendUser.username,
       email: realEmail || 'user@unud.ac.id',
       role: backendUser.role,
-      photo: defaultPhoto, // Langsung pakai URL ini
+      photo: defaultPhoto,
       detail: backendUser.role === 'mahasiswa' ? backendUser.mahasiswa : backendUser.staff
     }
 

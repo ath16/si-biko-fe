@@ -2,7 +2,6 @@
 import { useAuth } from '@/composables/useAuth'
 import Breadcrumb from '@/components/common/PageBreadcrumb.vue'
 
-// Import Komponen Detail
 import DetailMhs from '@/components/business/ajuan/detail/DetailMhs.vue'
 import DetailDosen from '@/components/business/ajuan/detail/DetailDosen.vue'
 import DetailWD3 from '@/components/business/ajuan/detail/DetailWD3.vue'

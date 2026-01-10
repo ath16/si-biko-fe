@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import axios from 'axios' // Pastikan axios sudah terinstall
+import axios from 'axios'
 
 const router = useRouter()
-const { setUser } = useAuth() // Asumsikan useAuth punya method setUser atau login yang fleksibel
+const { setUser } = useAuth()
 
 const username = ref('')
 const password = ref('')
@@ -23,8 +23,6 @@ const handleLogin = async () => {
   isSubmitting.value = true
 
   try {
-    // --- INTEGRASI BACKEND REAL ---
-    // Sesuaikan URL dengan backend Anda (biasanya http://localhost:8000/api/login)
     const response = await axios.post('http://localhost:8000/api/login', {
       username: username.value,
       password: password.value
@@ -32,19 +30,12 @@ const handleLogin = async () => {
 
     const { token, user } = response.data
 
-    // 1. Simpan Token
     localStorage.setItem('token', token)
 
-    // 2. Simpan User Data (agar bisa dibaca komponen lain)
     localStorage.setItem('user', JSON.stringify(user))
 
-    // 3. Update State Global (Composable)
-    // Jika useAuth Anda belum support setUser manual, Anda bisa modifikasi composable-nya nanti.
-    // Untuk saat ini kita simpan di localStorage dan redirect.
     if(setUser) setUser(user)
 
-    // 4. Redirect Sesuai Role (Logic Backend sudah handle role, kita tinggal baca)
-    // Backend mengirim 'role' di dalam objek user
     router.push('/app/dashboard')
 
   } catch (err: any) {

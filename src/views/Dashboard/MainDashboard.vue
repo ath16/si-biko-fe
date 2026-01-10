@@ -12,13 +12,11 @@ import {
 
 const { user, isMahasiswa, isDosen, isAdmin, isWD3 } = useAuth()
 
-// State Data
 const stats = ref<any[]>([])
-const recentActivities = ref<any[]>([]) // Untuk Mahasiswa (History)
-const todaySchedule = ref<any[]>([])    // Untuk Dosen (Jadwal Hari Ini)
-const adminSummary = ref<any>(null)     // Untuk Admin
+const recentActivities = ref<any[]>([])
+const todaySchedule = ref<any[]>([])
+const adminSummary = ref<any>(null)
 
-// Helper Format Tanggal
 const formatDate = (dateString: string) => {
   if (!dateString) return '-'
   return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
@@ -34,7 +32,6 @@ const getStatusColor = (status: string) => {
     }
 }
 
-// FETCH DASHBOARD DATA
 const fetchDashboard = async () => {
   try {
     const token = localStorage.getItem('token')
@@ -43,12 +40,10 @@ const fetchDashboard = async () => {
     let endpoint = ''
     if (isMahasiswa.value) endpoint = 'http://localhost:8000/api/mahasiswa/dashboard'
     else if (isAdmin.value) endpoint = 'http://localhost:8000/api/admin/dashboard'
-    else endpoint = 'http://localhost:8000/api/staff/dashboard' // Dosen, WD3, Konselor
+    else endpoint = 'http://localhost:8000/api/staff/dashboard'
 
     const response = await axios.get(endpoint, config)
     const data = response.data
-
-    // --- MAPPING DATA SESUAI ROLE ---
 
     if (isMahasiswa.value) {
         const s = data.stats
@@ -76,10 +71,8 @@ const fetchDashboard = async () => {
             { title: 'Total Mahasiswa', value: s.total_mahasiswa, color: 'text-blue-600', icon: UserGroupIcon },
             { title: 'Total Staff/Dosen', value: s.total_staff, color: 'text-green-600', icon: UserGroupIcon },
             { title: 'Total Ajuan Masuk', value: s.total_ajuan, color: 'text-yellow-600', icon: DocsIcon },
-            // Placeholder: Admin bisa tambah statistik lain
-            { title: 'Laporan Bulanan', value: 'Lihat', color: 'text-slate-500', icon: DraftIcon },
+            { title: 'Laporan Bulanan', value: 'Lihat', color: 'text-slate-500', icon: DraftIcon }
         ]
-        // Admin biasanya punya chart, disini kita simpan data raw-nya dulu
         adminSummary.value = data
     }
 

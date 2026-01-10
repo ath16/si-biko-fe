@@ -16,14 +16,11 @@ const showModalReschedule = ref(false)
 
 const getBadgeClass = (status: string) => {
   const base = "rounded py-1 px-3 text-sm font-medium uppercase "
-  switch(status) {
-    case 'pending': return base + "bg-yellow-600/10 text-yellow-600"
-    case 'reschedule': return base + "bg-purple-600/10 text-purple-600"
-    case 'disetujui': return base + "bg-green-600/10 text-green-600"
-    case 'ditolak': return base + "bg-red-600/10 text-red-600"
-    case 'selesai': return base + "bg-blue-600/10 text-blue-600"
-    default: return base + "bg-gray-100 text-slate-600"
-  }
+  if(status.includes('selesai') || status.includes('disetujui')) return base + "bg-green-100 text-green-700"
+  if(status.includes('ditolak')) return base + "bg-red-100 text-red-700"
+  if(status.includes('reschedule')) return base + "bg-purple-100 text-purple-700"
+  if(status === 'rujuk universitas') return base + "bg-teal-100 text-teal-700"
+  return base + "bg-yellow-100 text-yellow-700"
 }
 
 const fetchDetail = async () => {
@@ -42,38 +39,31 @@ const fetchDetail = async () => {
 
 onMounted(() => fetchDetail())
 
-// AKSI MAHASISWA: Setuju Jadwal
 const handleSetuju = async () => {
   if (!confirm("Setujui jadwal yang ditawarkan ini?")) return
   try {
     const token = localStorage.getItem('token')
-    // Kirim status 'disetujui' ke update endpoint
     await axios.put(`http://localhost:8000/api/mahasiswa/ajuan/${idAjuan}`,
       { status: 'setuju' },
       { headers: { Authorization: `Bearer ${token}` } }
     )
     alert("Jadwal disetujui.")
     fetchDetail()
-  } catch (error) {
-    alert("Gagal menyetujui jadwal.")
-  }
+  } catch (error) { alert("Gagal menyetujui jadwal.") }
 }
 
-// AKSI MAHASISWA: Ajukan Jadwal Lain
 const onSubmitReschedule = async (data: any) => {
   try {
     const token = localStorage.getItem('token')
     const dateTime = `${data.tanggal} ${data.waktu}`
     await axios.put(`http://localhost:8000/api/mahasiswa/ajuan/${idAjuan}`,
-      { tanggal_jadwal: dateTime }, // Mengirim tanggal baru = status jadi pending
+      { tanggal_jadwal: dateTime },
       { headers: { Authorization: `Bearer ${token}` } }
     )
     alert("Pengajuan jadwal baru berhasil dikirim.")
     showModalReschedule.value = false
     fetchDetail()
-  } catch (error) {
-    alert("Gagal mengajukan jadwal baru.")
-  }
+  } catch (error) { alert("Gagal mengajukan jadwal baru.") }
 }
 
 const handleHapus = async () => {
@@ -107,7 +97,7 @@ const handleBack = () => router.back()
           </div>
           <div class="mb-4.5"><label class="block font-semibold">Judul</label><p>{{ detailAjuan.judul_konseling }}</p></div>
           <div class="mb-4.5"><label class="block font-semibold">Jenis</label><p>{{ detailAjuan.jenis_layanan }}</p></div>
-          <div class="mb-4.5"><label class="block font-semibold">Handler</label><p>{{ detailAjuan.handler?.nama_lengkap || 'Belum Ditentukan' }}</p></div>
+          <div class="mb-4.5"><label class="block font-semibold">Dosen PA/Konselor</label><p>{{ detailAjuan.handler?.nama_lengkap || 'Belum Ditentukan' }}</p></div>
           <div class="mb-4.5"><label class="block font-semibold">Deskripsi</label><p class="italic text-slate-600">"{{ detailAjuan.deskripsi_masalah }}"</p></div>
         </div>
       </div>
@@ -116,26 +106,26 @@ const handleBack = () => router.back()
     <div class="flex flex-col gap-9">
       <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
         <div class="border-b border-stroke py-4 px-6.5 dark:border-strokedark">
-          <h3 class="font-medium text-black dark:text-white">Status & Jadwal</h3>
+          <h3 class="font-medium text-black dark:text-white">Status Penanganan</h3>
         </div>
         <div class="p-6.5">
 
           <div v-if="detailAjuan.status === 'pending' || detailAjuan.status === 'pending wd3'" class="text-center py-4">
              <div class="bg-yellow-50 p-4 rounded mb-4 border border-yellow-200 text-yellow-800 text-sm">
-                {{ detailAjuan.status === 'pending wd3' ? 'Menunggu respon Wakil Dekan 3.' : 'Menunggu respon Dosen.' }}
+                {{ detailAjuan.status === 'pending wd3' ? 'Sedang dalam antrian Wakil Dekan 3.' : 'Menunggu respon Dosen Pembimbing.' }}
              </div>
              <p v-if="detailAjuan.tanggal_jadwal" class="text-sm text-gray-500">Jadwal diajukan:</p>
              <p v-if="detailAjuan.tanggal_jadwal" class="font-bold mb-6 text-lg">{{ detailAjuan.tanggal_jadwal }}</p>
 
-             <div v-if="isMahasiswa" class="flex justify-center gap-3">
+             <div v-if="isMahasiswa && detailAjuan.status === 'pending'" class="flex justify-center gap-3">
                 <button @click="handleHapus" class="text-white bg-red-600 px-4 py-2 rounded text-sm hover:bg-red-700">Batalkan</button>
              </div>
           </div>
 
           <div v-else-if="detailAjuan.status === 'reschedule' || detailAjuan.status === 'reschedule wd3'" class="text-center py-4 flex flex-col gap-3">
              <div class="bg-purple-50 p-4 rounded mb-2 border border-purple-200 text-purple-800 text-sm">
-                <p class="font-bold">Tawaran Jadwal Baru</p>
-                <p>{{ detailAjuan.status.includes('wd3') ? 'WD3' : 'Dosen' }} menawarkan waktu baru.</p>
+                <p class="font-bold">📅 Tawaran Jadwal Baru</p>
+                <p>Pihak {{ detailAjuan.status.includes('wd3') ? 'Fakultas (WD3)' : 'Dosen' }} mengajukan waktu baru.</p>
              </div>
              <p class="font-bold text-xl text-purple-700">{{ detailAjuan.tanggal_jadwal }}</p>
 
@@ -149,12 +139,36 @@ const handleBack = () => router.back()
              <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3 text-green-600">✓</div>
              <p class="font-bold text-green-600 mb-2">Jadwal Terkonfirmasi.</p>
              <p class="text-xl font-bold">{{ detailAjuan.tanggal_jadwal }}</p>
+             <p class="text-sm text-gray-500 mt-2">Silakan datang sesuai jadwal untuk konseling.</p>
           </div>
 
           <div v-else class="text-center py-4">
-             <p class="font-bold mb-2">{{ detailAjuan.status.toUpperCase() }}</p>
-             <p v-if="detailAjuan.catatan_sesi" class="text-sm bg-gray-50 p-2 rounded text-left">Catatan: {{ detailAjuan.catatan_sesi }}</p>
-             <p v-if="detailAjuan.alasan_penolakan" class="text-sm bg-red-50 p-2 rounded text-left text-red-700">Alasan: {{ detailAjuan.alasan_penolakan }}</p>
+             <div v-if="detailAjuan.status === 'selesai'" class="mb-4">
+                 <h3 class="text-lg font-bold text-green-600">Selesai</h3>
+                 <p class="text-sm text-gray-500">Konseling telah selesai dilakukan.</p>
+             </div>
+             <div v-else-if="detailAjuan.status === 'rujuk universitas'" class="mb-4">
+                 <h3 class="text-lg font-bold text-teal-600">Dirujuk ke Universitas</h3>
+                 <p class="text-sm text-gray-500">Kasus dilimpahkan ke tingkat Universitas.</p>
+             </div>
+             <div v-else-if="detailAjuan.status.includes('ditolak')" class="mb-4">
+                 <h3 class="text-lg font-bold text-red-600">Ditolak</h3>
+             </div>
+
+             <div v-if="detailAjuan.catatan_dosen" class="bg-blue-50 p-3 rounded text-left border border-blue-100 text-sm mb-3">
+              <span class="font-bold block mb-1 text-blue-800">Catatan Dosen Pembimbing:</span>
+              <p class="text-gray-700">{{ detailAjuan.catatan_dosen }}</p>
+            </div>
+
+            <div v-if="detailAjuan.catatan_wd3" class="bg-purple-50 p-3 rounded text-left border border-purple-100 text-sm mb-3">
+              <span class="font-bold block mb-1 text-purple-800">Catatan Wakil Dekan 3:</span>
+              <p class="text-gray-700">{{ detailAjuan.catatan_wd3 }}</p>
+            </div>
+
+             <div v-if="detailAjuan.alasan_penolakan" class="bg-red-50 p-3 rounded text-left border border-red-100 text-sm text-red-800">
+                 <span class="font-bold block mb-1">Alasan Penolakan:</span>
+                 {{ detailAjuan.alasan_penolakan }}
+             </div>
           </div>
 
           <button @click="handleBack" class="text-blue-600 font-medium hover:underline mt-6 block w-full">Kembali</button>

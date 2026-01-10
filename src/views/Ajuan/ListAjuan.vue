@@ -5,7 +5,7 @@ import Breadcrumb from '@/components/common/PageBreadcrumb.vue'
 import TabelAjuanMhs from '@/components/business/ajuan/TabelAjuanMhs.vue'
 import TabelAjuanDosen from '@/components/business/ajuan/TabelAjuanDosen.vue'
 import TabelAjuanAdmin from '@/components/business/ajuan/TabelAjuanAdmin.vue'
-import TabelAjuanWD3 from '@/components/business/ajuan/TabelAjuanWD3.vue' // Import baru
+import TabelAjuanWD3 from '@/components/business/ajuan/TabelAjuanWD3.vue'
 
 const { isMahasiswa, isDosen, isWD3, isAdmin } = useAuth()
 </script>

@@ -16,7 +16,6 @@ const catatanDosen = ref('')
 const showModalTolak = ref(false)
 const showModalReschedule = ref(false)
 
-// Fetch Data
 const fetchDetail = async () => {
   try {
     const token = localStorage.getItem('token')
@@ -24,12 +23,11 @@ const fetchDetail = async () => {
       headers: { Authorization: `Bearer ${token}` }
     })
     detailAjuan.value = response.data
-    // Isi catatan dosen jika sudah ada
-    if(detailAjuan.value.catatan_sesi) {
-        catatanDosen.value = detailAjuan.value.catatan_sesi
+    if(detailAjuan.value.catatan_dosen) {
+        catatanDosen.value = detailAjuan.value.catatan_dosen
     }
   } catch (error) {
-    alert("Data tidak ditemukan")
+    alert("Data tidak ditemukan atau Anda tidak memiliki akses.")
     router.push('/app/ajuan')
   } finally {
     isLoading.value = false
@@ -37,7 +35,6 @@ const fetchDetail = async () => {
 }
 onMounted(() => fetchDetail())
 
-// Actions
 const handleTerima = async () => {
   if(!confirm("Terima ajuan ini?")) return
   try {
@@ -46,7 +43,7 @@ const handleTerima = async () => {
       { status: 'disetujui' },
       { headers: { Authorization: `Bearer ${token}` } }
     )
-    fetchDetail() // Refresh
+    fetchDetail()
   } catch (error) { alert("Gagal update status") }
 }
 
@@ -65,9 +62,7 @@ const onSubmitTolak = async (alasan: string) => {
 const onSubmitReschedule = async (data: any) => {
   try {
     const token = localStorage.getItem('token')
-    // Gabungkan tanggal dan waktu
     const dateTime = `${data.tanggal} ${data.waktu}`
-
     await axios.put(`http://localhost:8000/api/staff/ajuan/${idAjuan}/status`,
       { status: 'reschedule', tanggal_jadwal: dateTime },
       { headers: { Authorization: `Bearer ${token}` } }
@@ -86,12 +81,13 @@ const handleSelesai = async (tingkat: string) => {
     await axios.put(`http://localhost:8000/api/staff/ajuan/${idAjuan}/complete`,
       {
         catatan_sesi: catatanDosen.value,
-        tingkat_penanganan: tingkat // 'Prodi' (Selesai) atau 'Fakultas' (Rujuk)
+        tingkat_penanganan: tingkat
       },
       { headers: { Authorization: `Bearer ${token}` } }
     )
     alert("Status berhasil diperbarui.")
-    router.push('/app/ajuan')
+
+    fetchDetail()
   } catch (error) { alert("Gagal menyelesaikan sesi") }
 }
 </script>
@@ -131,6 +127,7 @@ const handleSelesai = async (tingkat: string) => {
         </div>
 
         <div class="p-6.5">
+
           <div v-if="detailAjuan.status === 'pending'" class="flex flex-col gap-4">
             <div class="bg-blue-50 text-blue-800 p-3 rounded text-sm mb-2 border border-blue-100">
               Jadwal yang diminta: <b>{{ detailAjuan.tanggal_jadwal }}</b>
@@ -157,10 +154,34 @@ const handleSelesai = async (tingkat: string) => {
           </div>
 
           <div v-else class="text-center p-6 bg-gray-50 rounded border border-gray-100">
-             <h3 class="font-bold mb-2">Status: {{ detailAjuan.status.toUpperCase() }}</h3>
-             <p v-if="detailAjuan.tingkat_penanganan === 'Fakultas'" class="text-purple-600 text-sm font-medium">Dirujuk ke Fakultas (WD3)</p>
-             <p v-else class="text-green-600 text-sm font-medium">Selesai di tingkat Prodi</p>
-             <RouterLink to="/app/ajuan" class="text-blue-600 underline mt-4 block">Kembali</RouterLink>
+            <div v-if="detailAjuan.tingkat_penanganan === 'Fakultas' || detailAjuan.status.includes('wd3') || detailAjuan.status === 'rujuk universitas'" class="mb-4">
+                <h3 class="font-bold text-purple-600">Dirujuk ke Fakultas</h3>
+                <p class="text-xs text-gray-500 mt-1">Anda telah melimpahkan kasus ini ke WD3.</p>
+                <span class="inline-block mt-2 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Status WD3: {{ detailAjuan.status }}</span>
+            </div>
+
+            <div v-else-if="detailAjuan.status === 'selesai'" class="mb-4">
+                <h3 class="font-bold text-green-600">Selesai di Prodi</h3>
+                <p class="text-xs text-gray-500 mt-1">Anda telah menyelesaikan kasus ini.</p>
+            </div>
+
+            <div v-else-if="detailAjuan.status === 'ditolak'" class="mb-4">
+                <h3 class="font-bold text-red-600">Ditolak</h3>
+            </div>
+
+            <div class="text-left mt-4 border-t pt-4 mb-4">
+              <p class="text-xs font-bold text-gray-500 mb-1">CATATAN ANDA:</p>
+              <div class="text-sm bg-white p-3 border rounded text-gray-700">
+                {{ detailAjuan.catatan_dosen || '-' }}
+              </div>
+            </div>
+
+            <div v-if="detailAjuan.catatan_wd3" class="text-left mt-4 border-t pt-4 border-purple-200 bg-purple-50 p-4 rounded">
+              <p class="text-xs font-bold text-purple-700 mb-1">CATATAN DARI WD3:</p>
+              <p class="text-sm text-gray-800">{{ detailAjuan.catatan_wd3 }}</p>
+            </div>
+
+            <RouterLink to="/app/ajuan" class="text-blue-600 underline mt-6 block font-medium">Kembali ke Daftar</RouterLink>
           </div>
 
         </div>

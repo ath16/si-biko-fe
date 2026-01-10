@@ -185,7 +185,6 @@ import { useRoute } from "vue-router";
 import { useAuth } from '@/composables/useAuth'
 import { useSidebar } from "@/composables/useSidebar";
 
-// Import Icons
 import {
   LayoutDashboardIcon,
   DocsIcon,
@@ -200,9 +199,7 @@ const route = useRoute();
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
 const { user } = useAuth();
 
-// --- KONFIGURASI MENU DINAMIS ---
 const allMenuGroups = [
-  // 1. MENU UMUM (Muncul untuk SEMUA Role)
   {
     title: "Menu Utama",
     roles: ['mahasiswa', 'dosen', 'konselor', 'wd3', 'admin'],
@@ -222,12 +219,10 @@ const allMenuGroups = [
     ],
   },
 
-  // 2. MODUL AJUAN (Muncul BEDA TAMPILAN tergantung Role)
   {
     title: "Layanan Konseling",
-    roles: ['mahasiswa', 'dosen', 'konselor', 'wd3', 'admin'], // Admin juga bisa lihat
+    roles: ['mahasiswa', 'dosen', 'konselor', 'wd3', 'admin'],
     items: [
-      // A. Tampilan Khusus MAHASISWA (Dropdown)
       {
         icon: DocsIcon,
         name: "Ajuan Konseling",
@@ -238,7 +233,6 @@ const allMenuGroups = [
         ],
       },
 
-      // B. Tampilan Khusus DOSEN / KONSELOR / WD3 (List Ajuan Masuk)
       {
         icon: DocsIcon,
         name: "Daftar Ajuan Masuk",
@@ -246,7 +240,6 @@ const allMenuGroups = [
         roles: ['dosen', 'konselor', 'wd3'],
       },
 
-      // C. Tampilan Khusus ADMIN (Data Semua Ajuan)
       {
         icon: DocsIcon,
         name: "Data Semua Ajuan",
@@ -256,7 +249,6 @@ const allMenuGroups = [
     ],
   },
 
-  // 3. MODUL ADMINISTRATOR (Hanya Admin)
   {
     title: "Administrator",
     roles: ['admin'],
@@ -277,21 +269,17 @@ const allMenuGroups = [
   }
 ];
 
-// --- LOGIC FILTERING ---
 const filteredMenuGroups = computed(() => {
   const currentRole = user.value.role || 'guest';
 
-  // Filter Grup Menu berdasarkan Role
   return allMenuGroups
     .filter(group => !group.roles || group.roles.includes(currentRole))
     .map(group => ({
       ...group,
-      // Filter Item Menu di dalamnya berdasarkan Role
       items: group.items.filter(item => !item.roles || item.roles.includes(currentRole))
     }));
 });
 
-// --- HELPER FUNCTIONS BAWAAN TEMPLATE ---
 const isActive = (path) => route.path === path;
 
 const toggleSubmenu = (groupIndex, itemIndex) => {
@@ -323,7 +311,7 @@ const startTransition = (el) => {
   el.style.height = "auto";
   const height = el.scrollHeight;
   el.style.height = "0px";
-  el.offsetHeight; // force reflow
+  el.offsetHeight;
   el.style.height = height + "px";
 };
 

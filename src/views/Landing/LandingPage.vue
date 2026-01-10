@@ -7,7 +7,7 @@ import { RouterLink } from 'vue-router'
 
     <nav class="w-full bg-white/90 backdrop-blur-sm border-b border-stroke py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50 shadow-sm">
       <div class="flex items-center gap-2">
-        <img src="/images/logo/logo-icon.svg" alt="Logo" class="w-8 h-8" />
+        <img src="/images/logo/fmipa-icon.svg" alt="Logo" class="w-8 h-8" />
         <span class="text-xl font-bold text-blue-600">SI-BIKO</span>
       </div>
       <div>

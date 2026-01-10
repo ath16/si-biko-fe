@@ -11,7 +11,6 @@ const idAjuan = route.params.id
 const isGenerating = ref(false)
 const isLoading = ref(true)
 
-// State Data Surat (Kosongkan Dulu)
 const surat = ref({
   nomor_surat: '...',
   tanggal: '...',
@@ -24,7 +23,6 @@ const surat = ref({
   }
 })
 
-// Fetch Data dari Backend
 const fetchSurat = async () => {
   try {
     const token = localStorage.getItem('token')
@@ -32,7 +30,6 @@ const fetchSurat = async () => {
       headers: { Authorization: `Bearer ${token}` }
     })
 
-    // Mapping response ke state
     surat.value = response.data.data
   } catch (error) {
     console.error("Gagal load surat:", error)
@@ -45,12 +42,11 @@ const fetchSurat = async () => {
 
 onMounted(() => fetchSurat())
 
-// Generate PDF
 const handleDownloadPDF = () => {
   isGenerating.value = true
   const element = document.getElementById('area-surat-resmi')
   const opt = {
-    margin:       0, // Margin biar aman saat print
+    margin:       0,
     filename:     `Surat_Rujukan_${surat.value.mahasiswa.nim}.pdf`,
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { scale: 2, useCORS: true },

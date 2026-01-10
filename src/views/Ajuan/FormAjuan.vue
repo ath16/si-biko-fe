@@ -7,22 +7,20 @@ import axios from 'axios'
 const router = useRouter()
 const route = useRoute()
 
-// Deteksi Mode Edit berdasarkan parameter URL ID
 const idAjuan = route.params.id
 const isEditMode = computed(() => !!idAjuan)
 
 const formData = ref({
   judul: '',
-  kategori: '', // Mapping ke 'jenis_layanan'
+  kategori: '',
   tanggal: '',
   waktu: '',
-  deskripsi: '' // Mapping ke 'deskripsi_masalah'
+  deskripsi: ''
 })
 
 const isSubmitting = ref(false)
 const isLoading = ref(false)
 
-// --- 1. LOAD DATA (JIKA EDIT MODE) ---
 const fetchDetail = async () => {
   if (!isEditMode.value) return
 
@@ -35,23 +33,19 @@ const fetchDetail = async () => {
 
     const data = response.data
 
-    // Validasi Status: Hanya 'pending' yang boleh diedit
     if (data.status !== 'pending') {
       alert(`Ajuan dengan status "${data.status}" tidak dapat diubah.`)
       router.push('/app/ajuan')
       return
     }
 
-    // Mapping Data Backend ke Form Frontend
     formData.value.judul = data.judul_konseling
     formData.value.kategori = data.jenis_layanan
     formData.value.deskripsi = data.deskripsi_masalah
 
-    // Pecah '2025-12-20 09:00:00' menjadi Tanggal dan Waktu
     if (data.tanggal_jadwal) {
       const [datePart, timePart] = data.tanggal_jadwal.split(' ')
       formData.value.tanggal = datePart
-      // Ambil HH:mm saja (5 karakter pertama) dari timePart
       formData.value.waktu = timePart ? timePart.substring(0, 5) : ''
     }
 
@@ -68,9 +62,7 @@ onMounted(() => {
   fetchDetail()
 })
 
-// --- 2. SUBMIT DATA (CREATE / UPDATE) ---
 const handleSubmit = async () => {
-  // Validasi Frontend Sederhana
   if (!formData.value.judul || !formData.value.kategori || !formData.value.tanggal || !formData.value.waktu) {
     alert("Mohon lengkapi data wajib: Judul, Jenis Layanan, Tanggal, dan Waktu.")
     return
@@ -82,32 +74,26 @@ const handleSubmit = async () => {
     const token = localStorage.getItem('token')
     const config = { headers: { Authorization: `Bearer ${token}` } }
 
-    // Persiapan Payload (Sesuai validasi AjuanController)
     const payload = {
       judul_konseling: formData.value.judul,
       jenis_layanan: formData.value.kategori,
       deskripsi_masalah: formData.value.deskripsi,
-      // Gabungkan Tanggal & Waktu -> YYYY-MM-DD HH:mm
       tanggal_jadwal: `${formData.value.tanggal} ${formData.value.waktu}`
     }
 
     if (isEditMode.value) {
-      // UPDATE
       await axios.put(`http://localhost:8000/api/mahasiswa/ajuan/${idAjuan}`, payload, config)
       alert("Perubahan berhasil disimpan!")
     } else {
-      // CREATE
       await axios.post('http://localhost:8000/api/mahasiswa/ajuan', payload, config)
       alert("Ajuan berhasil dikirim! Menunggu konfirmasi Dosen.")
     }
 
-    // Redirect kembali ke list
     router.push('/app/ajuan')
 
   } catch (error: any) {
     console.error("Submit error:", error)
     if (error.response) {
-      // Tampilkan pesan error dari Backend (misal: validasi gagal)
       alert("Gagal: " + (error.response.data.message || "Terjadi kesalahan pada server."))
     } else {
       alert("Gagal terhubung ke server.")

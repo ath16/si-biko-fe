@@ -6,7 +6,6 @@ import axios from 'axios'
 const dataAjuan = ref([])
 const isLoading = ref(true)
 
-// Helper Format Tanggal Indonesia
 const formatDate = (dateString: string) => {
   if (!dateString) return '-'
   return new Date(dateString).toLocaleDateString('id-ID', {
@@ -28,19 +27,31 @@ const fetchData = async () => {
   }
 }
 
-onMounted(() => {
-  fetchData()
-})
+onMounted(() => fetchData())
 
 const getStatusBadge = (status: string) => {
   switch(status) {
-    case 'pending': return 'bg-yellow-600/10 text-yellow-600'
-    case 'disetujui': return 'bg-green-600/10 text-green-600'
-    case 'ditolak': return 'bg-red-600/10 text-red-600'
-    case 'selesai': return 'bg-blue-600/10 text-blue-600'
-    case 'reschedule': return 'bg-purple-600/10 text-purple-600'
+    case 'pending': return 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+    case 'reschedule': return 'bg-purple-100 text-purple-700 border border-purple-200'
+    case 'disetujui': return 'bg-blue-100 text-blue-700 border border-blue-200'
+    case 'ditolak': return 'bg-red-100 text-red-700 border border-red-200'
+
+    case 'pending wd3': return 'bg-orange-100 text-orange-700 border border-orange-200'
+    case 'reschedule wd3': return 'bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200'
+    case 'disetujui wd3': return 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+
+    case 'selesai': return 'bg-green-100 text-green-700 border border-green-200'
+    case 'rujuk universitas': return 'bg-teal-100 text-teal-700 border border-teal-200'
+
     default: return 'bg-gray-100 text-gray-600'
   }
+}
+
+const getStatusLabel = (status: string) => {
+    if (status === 'rujuk universitas') return 'Dirujuk ke Univ'
+    if (status === 'pending wd3') return 'Proses di Fakultas'
+    if (status === 'reschedule wd3') return 'Jadwal Ulang WD3'
+    return status
 }
 </script>
 
@@ -75,7 +86,7 @@ const getStatusBadge = (status: string) => {
       </div>
       <div class="col-span-3 sm:col-span-2 flex items-center justify-center gap-2">
         <span :class="`px-2 py-1 rounded text-xs font-medium uppercase ${getStatusBadge(item.status)}`">
-          {{ item.status }}
+          {{ getStatusLabel(item.status) }}
         </span>
         <RouterLink :to="`/app/ajuan/${item.id_ajuan}`" class="text-blue-600 hover:underline text-sm ml-2">
           Detail

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router' // <--- INI KUNCINYA
+import { RouterView } from 'vue-router'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 </script>
